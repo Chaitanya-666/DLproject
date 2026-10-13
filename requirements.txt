@@ -1,0 +1,6 @@
+# Kaggle and Colab already have all of these.
+torch>=2.0
+numpy
+pillow
+# Only for annotating your own photos (run on your laptop, not on Kaggle):
+# labelme
