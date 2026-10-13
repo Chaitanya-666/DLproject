@@ -10,7 +10,8 @@ History: v1 CondInst ([docs/v1-condinst-plan.md](docs/v1-condinst-plan.md)) was 
 - [x] Topic registered
 - [x] Code scaffold: model, memory, data, loss, metrics, train, evaluate, own-dataset tools (smoke-tested on CPU)
 - [x] Synthetic own dataset (`dataset/custom/synthetic_leaf`, 60 samples)
-- [ ] Read the paper's method + experiments; copy its Kvasir-SEG numbers into README §10; confirm the split protocol
+- [x] Paper's Kvasir-SEG numbers copied into README §10 (Table II/IX); split confirmed as 880 / 120 (Table I)
+- [ ] Read the paper's method section yourself (§III) so you can explain it in the viva
 - [ ] Kaggle: GitHub token secret, sanity run, full training run (target: baseline Dice by Sun 18 Oct)
 - [ ] Evaluate with 10 refinement rounds; ablation without feedback
 - [ ] Own photos: 40–60 leaf-spot photos, Labelme, convert, fine-tune

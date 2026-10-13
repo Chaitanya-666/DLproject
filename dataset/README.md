@@ -10,7 +10,7 @@ Large data is not committed (see `.gitignore`). Only `custom/` lives in git.
 
 ```bash
 mkdir -p data && cd data
-wget https://datasets.simula.no/downloads/kvasir-seg.zip
+wget --no-check-certificate https://datasets.simula.no/downloads/kvasir-seg.zip   # the site's certificate chain is incomplete
 unzip -q kvasir-seg.zip          # -> data/Kvasir-SEG/{images,masks,kavsir_bboxes.json}
 cd .. && python -m src.split --data data/Kvasir-SEG     # writes train.txt (880) / test.txt (120)
 ```

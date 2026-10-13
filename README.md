@@ -61,7 +61,7 @@ The faculty brief (photo: [`brief/finalProjectDeepLearning.jpeg`](brief/finalPro
 | Last 5 years | Yes | Published 2023 (online 2022) |
 | "Fairly advanced" | Yes | Not a plain U-Net: a cross-epoch mask memory, hard-attention MixPool blocks, test-time iterative refinement |
 | From scratch | Yes | Every layer written with `nn.Conv2d`, `nn.BatchNorm2d` etc. No model zoo, no pretrained weights, no `segmentation_models_pytorch`. The authors' code was only read to check details |
-| Paper's dataset | Yes | Kvasir-SEG, same 256×256 input, same loss, same 880/120 split convention |
+| Paper's dataset | Yes | Kvasir-SEG, same loss, same 880/120 split. Input 256×256 as in the official code (the paper reports 512×512; `--size 512` reproduces that) |
 | Own small dataset, explained | Yes | Procedural synthetic leaf-spot generator (exact masks, logged parameters) and/or 40–60 phone photos annotated in Labelme (§9) |
 | PPT | Planned | Outline in §11 |
 
@@ -254,7 +254,7 @@ Details from the official code (`train.py`, `utils.py`):
 - The memory starts from **Otsu masks**: grey → 5×5 Gaussian blur → Otsu threshold.
 - The memory is **only replaced when validation loss improves**, so it always matches the best model so far. (`--memory-update always` in this repo refreshes it every epoch instead, which is a possible ablation.)
 - The validation images keep their own memory, updated by the same rule.
-- Hyperparameters: 256×256, Adam lr 1e-4, ReduceLROnPlateau (patience 5), batch 2, up to 500 epochs. Augmentation: rotate ±35°, horizontal/vertical flip, coarse dropout.
+- Hyperparameters (official code): 256×256, Adam lr 1e-4, ReduceLROnPlateau (patience 5), batch 2, up to 500 epochs. **The paper itself** (§IV-A, Table IX) says 100 epochs and 512×512 for Kvasir-SEG. Augmentation: rotate ±35°, horizontal/vertical flip, coarse dropout.
 
 ### 4.6 Test-time iterative refinement
 
@@ -467,7 +467,8 @@ Slide content: how many images, how they were made (script or photos + Labelme),
 
 | Kvasir-SEG test (120 images) | Dice | mIoU | Recall | Precision | F2 | FPS |
 |---|---|---|---|---|---|---|
-| FANet, paper | | | | | | |
+| FANet, paper (Table II/IX, 512×512, GTX 1050 Ti) | 0.8803 | 0.8153 | 0.9058 | 0.9005 | 0.8872 | 68.18 |
+| Baseline without MixPool, paper (Table IX, B1) | 0.8516 | 0.7732 | 0.8835 | 0.8710 | 0.8614 | 104.20 |
 | FANet, mine, refinement round 1 | | | | | | |
 | FANet, mine, best round | | | | | | |
 | No feedback (zeros memory), mine | | | | | | |
