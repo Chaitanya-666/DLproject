@@ -19,3 +19,6 @@ wandb/
 papers/*.pdf
 
 .DS_Store
+
+# Downloaded datasets
+data/
