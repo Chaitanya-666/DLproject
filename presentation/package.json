@@ -1,0 +1,8 @@
+{
+  "name": "fanet-deck",
+  "private": true,
+  "description": "Builds the project PPT from runs/ results: node build_deck.js",
+  "dependencies": {
+    "pptxgenjs": "^3.12.0"
+  }
+}
