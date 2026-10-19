@@ -51,9 +51,12 @@ def seed_everything(seed):
     torch.cuda.manual_seed_all(seed)
 
 
-def run_epoch(model, loader, memory, loss_fn, device, optimizer=None, use_aug=False, max_batches=None):
+def run_epoch(model, loader, memory, loss_fn, device, optimizer=None, aug=None, max_batches=None):
     """One pass over a loader. Trains if an optimizer is given, else evaluates.
-    Stages each prediction into `memory`. Returns (mean loss, metrics dict)."""
+    Stages each prediction into `memory`. Returns (mean loss, metrics dict).
+
+    aug: None, "aligned" (image, ground truth and memory move together) or
+    "official" (only image and ground truth move, as in the authors' code)."""
     training = optimizer is not None
     model.train(training)
     total, batches = 0.0, 0
@@ -66,12 +69,16 @@ def run_epoch(model, loader, memory, loss_fn, device, optimizer=None, use_aug=Fa
         prev = memory.get(idx, device)
 
         params = None
-        if use_aug:
+        if aug == "aligned":
             params = augment.sample_params(image.shape[0])
             image = augment.apply_geometric(image, params)
             target = augment.apply_geometric(target, params)
             prev = augment.apply_geometric(prev, params)
             image = augment.photometric(image)
+        elif aug == "official":
+            # The memory mask is NOT moved, and the prediction is stored as made.
+            image, target = augment.official_geometric(image, target)
+            image = augment.photometric(image, p_jitter=0.0)
 
         with torch.set_grad_enabled(training):
             logits = model(image, prev)
@@ -107,6 +114,9 @@ def main():
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--memory-update", choices=["on-improve", "always"], default="on-improve")
     ap.add_argument("--no-aug", action="store_true", help="turn augmentation off")
+    ap.add_argument("--memory-aug", choices=["official", "aligned"], default="official",
+                    help="official: augment image + ground truth only, like the authors' code "
+                         "(memory misaligned for augmented samples); aligned: move the memory too")
     ap.add_argument("--no-feedback", action="store_true",
                     help="ablation: memory stays all zeros, no previous mask is ever fed back")
     ap.add_argument("--init", help="checkpoint to start from (fine-tuning)")
@@ -152,7 +162,7 @@ def main():
     for epoch in range(1, args.epochs + 1):
         t0 = time.time()
         train_loss, train_scores = run_epoch(model, train_loader, train_mem, loss_fn, device,
-                                             optimizer, use_aug=not args.no_aug,
+                                             optimizer, aug=None if args.no_aug else args.memory_aug,
                                              max_batches=args.max_batches)
         val_loss, val_scores = run_epoch(model, val_loader, val_mem, loss_fn, device,
                                          max_batches=args.max_batches)
