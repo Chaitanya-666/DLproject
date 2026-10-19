@@ -335,6 +335,17 @@ sigmoid(logits) ─► undo flip/rot90 ─► memory.stage(i, pred)
    | ground truth (oracle) | 0.958 | 0.971 | 0.956 |
 
    The model largely **copies its memory**: give it nothing and recall falls to 0.41, give it everything and recall is 0.99. With perfectly aligned memory, copying is always rewarded. In the official code about two-thirds of training samples are rotated or flipped while their memory is not, so the memory is often wrong and the model must learn to check it against the image. That is why `--memory-aug official` is now the default; `runs/kvasir_official` tests it.
+5. **With the official augmentation, the model is robust to an empty memory but still pulled by an over-full one.** Same probe on `runs/kvasir_official` (`python -m src.memory_probe`), one pass:
+
+   | Starting memory | aligned (first run) | official (final) |
+   |---|---|---|
+   | Otsu | 0.536 | 0.615 |
+   | all zeros | 0.517 | **0.828** |
+   | all ones | 0.383 | 0.518 |
+   | own training-time memory | 0.848 | 0.908 |
+   | ground truth | 0.958 | 0.935 |
+
+   An empty mask is now a good start, while Otsu (which marks ~60% of the image) still makes round 1 over-segment, and refinement only slowly trims it: 0.615 → 0.842 in 10 rounds. Starting from zeros instead (`evaluate.py --start zeros`) gives 0.829 → 0.900 in 10 rounds, above the paper's 0.880. This changes the test procedure, not the model, so the official-protocol number (0.842) stays the headline reproduction result.
 
 ### 5.5 Detection view: boxes from masks
 
@@ -484,22 +495,31 @@ Slide content: how many images, how they were made (script or photos + Labelme),
 
 ## 10. Results
 
-*To be filled after the Kaggle run.* Put the paper's Kvasir-SEG numbers next to yours (copy them from the paper's Kvasir-SEG results table).
+All numbers: 120 Kvasir-SEG test images, per-image scores averaged (as the official test script does), 10 refinement rounds. Our own rows are 256×256, batch 8, trained on the laptop RTX 5050 (19 Oct 2026). They come from `runs/<run>/eval_test*/results.csv`; regenerate with `python -m src.evaluate ... --iters 10`.
 
 | Kvasir-SEG test (120 images) | Dice | mIoU | Recall | Precision | F2 | FPS |
 |---|---|---|---|---|---|---|
 | FANet, paper (Table II/IX, 512×512, GTX 1050 Ti) | 0.8803 | 0.8153 | 0.9058 | 0.9005 | 0.8872 | 68.18 |
 | Baseline without MixPool, paper (Table IX, B1) | 0.8516 | 0.7732 | 0.8835 | 0.8710 | 0.8614 | 104.20 |
-| FANet, mine, refinement round 1 | | | | | | |
-| FANet, mine, best round | | | | | | |
-| No feedback (zeros memory), mine | | | | | | |
+| **FANet, mine, official protocol** (Otsu start, round 10) | **0.8422** | **0.7790** | 0.9341 | 0.8345 | 0.8684 | 87 |
+| FANet, mine, Otsu start, round 1 | 0.6148 | 0.5115 | 0.9653 | 0.5298 | 0.7291 | |
+| **FANet, mine, empty start** (`--start zeros`, round 10) | **0.8999** | **0.8414** | 0.9001 | 0.9346 | 0.8977 | 88 |
+| FANet, mine, 512×512 (Kaggle P100) | *running* | | | | | |
+| No feedback (`--no-feedback`), mine | *running (Kaggle T4)* | | | | | |
+| First attempt, `--memory-aug aligned`, Otsu start, round 10 | 0.6835 | 0.5887 | 0.9578 | 0.6191 | 0.7749 | |
 
-| Own dataset (test split) | Dice | mIoU | Box recall |
+FPS: the round-10 figure from `results.csv`, RTX 5050 laptop GPU, batch 8 (round 1 is slower because it includes CUDA warm-up).
+
+**Detection view** (boxes from blobs, IoU ≥ 0.5, `metrics.BoxAverager`): official protocol box precision 0.685, box recall 0.800, mean box IoU 0.881; empty start box precision 0.836, box recall 0.896.
+
+**How to read this.** Under the paper's own test protocol we get Dice 0.842, 0.038 below the paper. Likely reasons: half the paper's input resolution (the 512 run tests this), batch 8 instead of 2, and a test split that may hold different images. Starting refinement from an empty mask instead of Otsu gives 0.900 with the same weights. That is a change to the test procedure, not to the model, so it is reported separately from the reproduction (§5.4, point 5). Both rows pick the checkpoint on the test images, as the authors' code does, so both are slightly optimistic.
+
+| Own dataset: synthetic leaf spots (12 test images) | Dice | mIoU | Box recall |
 |---|---|---|---|
-| Kvasir model, no fine-tuning | | | |
-| After fine-tuning | | | |
+| Kvasir model, no fine-tuning (best of 3 rounds) | 0.474 | 0.382 | 0.364 |
+| After fine-tuning from the Kvasir weights, 60 epochs | 0.984 | 0.969 | 0.909 |
 
-If your numbers are a little below the paper's, the usual reasons are: a different 120-image test split, fewer epochs / larger batch, and the 90° rotation instead of ±35°.
+The synthetic leaves are much easier than real photos (clean shapes, plain backgrounds); real Labelme-annotated photos are the next step (§9.2).
 
 ---
 
