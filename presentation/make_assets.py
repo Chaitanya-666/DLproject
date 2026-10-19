@@ -4,6 +4,7 @@
 
 Writes into presentation/assets/:
     kvasir_example.png   one Kvasir-SEG test image | its ground-truth mask | overlay
+    kvasir_overlay.png   just the overlay (title slide)
     otsu_example.png     the same image | the Otsu starting mask FANet begins from
     leaf_examples.png    four synthetic leaf samples with their exact masks overlaid
     strip_<run>.png      3 test images: image | truth | Otsu | round 1 | round 2 | last round
@@ -46,6 +47,7 @@ def main():
     i = int(np.argmin(np.abs(frac - 0.18)))   # a typical, clearly visible polyp
     img, gt = kv.images[i], kv.masks[i]
     Image.fromarray(row([img, gray3(gt), overlay(img, gt)])).save(os.path.join(OUT, "kvasir_example.png"))
+    Image.fromarray(overlay(img, gt)).save(os.path.join(OUT, "kvasir_overlay.png"))
     Image.fromarray(row([img, gray3(otsu_mask(img))])).save(os.path.join(OUT, "otsu_example.png"))
     print("kvasir example:", kv.stems[i], f"polyp covers {100 * frac[i]:.1f}%")
 
