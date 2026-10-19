@@ -359,6 +359,18 @@ sigmoid(logits) ─► undo flip/rot90 ─► memory.stage(i, pred)
 - Augmentation round trip: `invert_geometric(apply_geometric(x)) == x` exactly.
 - Full pipeline on 60 synthetic leaf images at 128×128, 12 epochs, ~9 s/epoch on CPU: validation Dice rose from 0.08 to ~0.85; `evaluate.py` produced metrics per refinement round, strips and masks. So the code runs end to end; real numbers come from the Kaggle run.
 
+### 5.7 Compute cost (measured)
+
+FANet is small in parameters (7.7M) but expensive per image, because it keeps 32–64 channels at full input resolution and every block runs MixPool's three extra convolutions.
+
+| | Forward GFLOPs per image |
+|---|---|
+| FANet, 256×256 | 40.5 |
+| FANet, 512×512 | 162 |
+| ResNet-50, 224×224 (for scale) | about 8 |
+
+A training step (forward + backward) costs about 3× the forward pass. On the RTX 5050 laptop GPU a batch of 8 at 256×256 takes 259 ms in fp32 and 146 ms with mixed precision (`--amp`); a full epoch (880 train + 120 test images) takes ~33 s in fp32 and ~24 s with `--amp`, the rest being per-image metrics and memory copies on the CPU. The T4 and P100 on Kaggle are no faster than the laptop GPU in fp32; the T4 is only fast in fp16 (Tensor Cores), so `--amp` matters most there.
+
 ---
 
 ## 6. Setup
