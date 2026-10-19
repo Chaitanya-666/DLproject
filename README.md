@@ -339,7 +339,15 @@ sigmoid(logits) ─► undo flip/rot90 ─► memory.stage(i, pred)
 
 ## 6. Setup
 
-**Kaggle (main route).** Open [`notebooks/kaggle_fanet.ipynb`](notebooks/kaggle_fanet.ipynb) in Kaggle (*File → Import Notebook*).
+**Kaggle from the terminal (used for the ablation and 512 runs).** With the Kaggle CLI logged in, [`kaggle/offload.sh`](kaggle/offload.sh) uploads the current `src/` and runs one training + evaluation on a free GPU as a private script notebook, then downloads the results:
+```bash
+kaggle/offload.sh push kvasir-nofb t4 "--epochs 200 --batch 8 --no-feedback" 1   # name, GPU, train args, eval rounds
+kaggle/offload.sh status kvasir-nofb
+kaggle/offload.sh pull kvasir-nofb                                                 # -> runs/kvasir_nofb/
+```
+It trains on the private dataset `kvasir-seg-fanet-split`: our exact Kvasir-SEG copy with its `train.txt` / `test.txt`, so the 120 test images are the same as on the laptop. Kaggle's free GPUs are a T4 or a P100 (16 GB each); two sessions can run at once.
+
+**Kaggle notebook (by hand).** Open [`notebooks/kaggle_fanet.ipynb`](notebooks/kaggle_fanet.ipynb) in Kaggle (*File → Import Notebook*).
 - Settings: Accelerator **GPU T4 x1**, Internet **On** (needs a phone-verified account).
 - The repo is private, so the notebook clones it with a token: create a GitHub fine-grained token (read-only, this repo only), add it in Kaggle under **Add-ons → Secrets** as `GITHUB_TOKEN`.
 - Free quota: about 30 GPU-hours a week, 12 hours per session.
@@ -351,6 +359,7 @@ python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\
 pip install -r requirements.txt                        # for CUDA, install torch from pytorch.org first
 python -m src.model                                    # prints shapes and parameter count
 ```
+The RTX 5050 (Blackwell) needs a CUDA 12.8 build of PyTorch: `pip install torch --index-url https://download.pytorch.org/whl/cu128`. At 256×256, batch 8 uses about 4 GB and an epoch takes 35–55 s (the laptop GPU slows down when it reaches ~89 °C). At 512×512 only batch 4 fits in 8 GB, so the 512 run went to Kaggle.
 
 All scripts are run from the repo root as modules: `python -m src.<script> --help`.
 
@@ -387,6 +396,7 @@ python -m src.train --data data/Kvasir-SEG --out runs/sanity --epochs 2 --max-ba
 python -m src.train --data data/Kvasir-SEG --out runs/kvasir
 #   --batch 8 --lr 1e-4 --epochs 200 --early-stop 40 --size 256      (defaults)
 #   --memory-update always     ablation: refresh memory every epoch
+#   --no-feedback              ablation: memory stays all zeros (no previous mask ever fed back)
 #   --batch 2 --epochs 500 --early-stop 0                              official settings
 
 # test with 10 refinement rounds (official setting)
@@ -408,7 +418,7 @@ python -m src.evaluate --ckpt runs/kvasir/best.pt --images some_folder/
 **Ideas for extra experiments (good for the PPT):**
 - Refinement rounds 1 vs 10 (already in `results.csv`).
 - `--memory-update on-improve` vs `always`.
-- Remove the feedback: pass an all-zeros memory (a quick code change in `memory.py`) → a plain U-Net-like baseline to show what feedback adds.
+- Remove the feedback: `--no-feedback` keeps the memory all zeros, so MixPool only has its own (untrained) fmask gate → shows what feedback adds. `evaluate.py` reads the flag from the checkpoint and tests the same way.
 
 ---
 
