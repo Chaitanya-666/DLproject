@@ -5,6 +5,8 @@
 #   kaggle/offload.sh status <name>
 #   kaggle/offload.sh pull   <name>          # -> runs/<name>/ (best.pt, log.csv, eval_test/)
 #
+# Kaggle allows 2 GPU batch sessions at once; a third push is refused.
+#
 # Example (the no-feedback ablation):
 #   kaggle/offload.sh push kvasir-nofb t4 "--epochs 200 --batch 8 --no-feedback" 1
 #
@@ -49,8 +51,11 @@ push)
  "dataset_sources": ["$DATA_DATASET", "$CODE_DATASET"], "competition_sources": [], "kernel_sources": []}
 EOF
     sleep 30   # give the new code version time to finish processing
-    "$KAGGLE" kernels push -p "$tmp/kernel" --accelerator "$acc"
+    # The CLI exits 0 even when the push is refused (e.g. "Maximum batch GPU
+    # session count of 2 reached"), so check its message instead.
+    out=$("$KAGGLE" kernels push -p "$tmp/kernel" --accelerator "$acc" 2>&1); echo "$out"
     rm -rf "$tmp"
+    if grep -qi "error" <<<"$out"; then echo "push FAILED"; exit 1; fi
     echo "running: https://www.kaggle.com/code/$kernel"
     ;;
 status)
