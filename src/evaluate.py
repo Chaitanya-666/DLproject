@@ -4,7 +4,7 @@
     python -m src.evaluate --ckpt runs/leaf/best.pt --images my_photos/       # no ground truth
 
 Test-time refinement (from the paper): start each test image's memory from the
-Otsu guess, predict, put the prediction back into memory, predict again, and so
+Otsu guess (or, with --start zeros, from an empty mask), predict, put the prediction back into memory, predict again, and so
 on for --iters rounds. Metrics are reported after every round, so you can see
 whether the masks improve (results.csv).
 
@@ -57,6 +57,8 @@ def main():
     ap.add_argument("--split", default="test")
     ap.add_argument("--images", help="plain folder of images, no ground truth")
     ap.add_argument("--iters", type=int, default=5, help="refinement rounds (official code: 10)")
+    ap.add_argument("--start", choices=["otsu", "zeros"], default="otsu",
+                    help="round-0 memory: Otsu (official) or an empty mask (our extra experiment)")
     ap.add_argument("--batch", type=int, default=8)
     ap.add_argument("--strips", type=int, default=30, help="how many example strips to save")
     ap.add_argument("--out")
@@ -77,8 +79,13 @@ def main():
     loader = DataLoader(data, batch_size=args.batch, shuffle=False)
     # A model trained with --no-feedback is also tested without feedback.
     memory = MaskMemory(data.images, feedback=not state["args"].get("no_feedback", False))
+    if args.start == "zeros":
+        memory.masks.zero_()
+        memory.staged.zero_()
 
     tag = args.split if has_gt else "images"
+    if args.start != "otsu":
+        tag += f"_{args.start}"
     out = args.out or os.path.join(os.path.dirname(args.ckpt), f"eval_{tag}")
     os.makedirs(os.path.join(out, "strips"), exist_ok=True)
     os.makedirs(os.path.join(out, "masks"), exist_ok=True)
