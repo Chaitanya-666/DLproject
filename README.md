@@ -15,7 +15,9 @@ DOI [10.1109/TNNLS.2022.3159394](https://doi.org/10.1109/TNNLS.2022.3159394) ·
 
 **PPT title:** *Polyp Segmentation for Colorectal Cancer Screening using FANet (Feedback Attention), with Transfer to Plant Disease Spotting.*
 
-**Status (13 Oct 2026):** topic registered (row 29 of the sheet). Code scaffold written and smoke-tested on CPU. Next: first full training run on Kaggle.
+**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. Pending: no-feedback ablation and 512×512 run on Kaggle; real leaf photos.
+
+**Weekend study guide:** [`docs/study_guide.pdf`](docs/study_guide.pdf) (four sessions with quizzes and hands-on tasks). **Deck:** [`presentation/FANet_ChaitanyaShinde_231070066.pptx`](presentation/FANet_ChaitanyaShinde_231070066.pptx).
 
 This README is the whole project's documentation. Read it top to bottom once and you should be able to run everything, explain every design choice, and answer viva questions.
 
