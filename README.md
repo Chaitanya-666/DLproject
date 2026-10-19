@@ -574,6 +574,10 @@ About 12 slides:
 
 **Did you find anything odd in the paper's design?** Yes: the fmask head's output is thresholded with `> 0.5`, so no gradient reaches its convs; about 13% of the parameters never train. The useful attention comes from the previous mask.
 
+**What Dice did you get, and why is it below the paper?** 0.842 with the paper's test protocol (Otsu start, 10 refinement rounds) at 256×256, against 0.880 in the paper at 512×512. Reasons: half the resolution, batch 8 instead of 2, and possibly a different set of 120 test images. The 512×512 run checks the resolution part.
+
+**How did you get 0.900?** Same weights, different test-time start: an empty mask instead of Otsu. Otsu marks about 60% of each image, so the first prediction over-segments and refinement trims it only slowly. An empty start avoids that. It is our variant of the test procedure, so the headline reproduction number stays 0.842.
+
 **How do you get detection from segmentation?** Connected components of the mask → one bounding box per blob → match to true boxes by IoU ≥ 0.5 → box precision/recall.
 
 **How many parameters, and how fast?** 7.72M parameters. FPS is measured in `evaluate.py` (fill in from the T4 run).

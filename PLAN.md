@@ -12,14 +12,17 @@ History: v1 CondInst ([docs/v1-condinst-plan.md](docs/v1-condinst-plan.md)) was 
 - [x] Synthetic own dataset (`dataset/custom/synthetic_leaf`, 60 samples)
 - [x] Paper's Kvasir-SEG numbers copied into README §10 (Table II/IX); split confirmed as 880 / 120 (Table I)
 - [ ] Read the paper's method section yourself (§III) so you can explain it in the viva
-- [x] Sanity run + full training run, 256×256 (laptop RTX 5050, 19 Oct; one day after the 18 Oct target). Best checkpoint epoch 76, test Dice ≈ 0.844 during training
+- [x] First full run, 256×256, `--memory-aug aligned` (laptop, 19 Oct): only 0.684 from the official Otsu start; the model copies its memory (README §5.4)
+- [x] Final run, 256×256, `--memory-aug official` (laptop, 19 Oct): **Dice 0.842** (paper protocol, Otsu start, 10 rounds), **0.900** from an empty start; paper 0.880
 - [x] Kaggle offload set up (`kaggle/offload.sh`, private datasets for code and data; no GitHub token needed)
-- [ ] Paper protocol run, 512×512 / 100 epochs (Kaggle P100, running)
-- [ ] Evaluate with 10 refinement rounds (queued after the main run)
+- [ ] 512×512 / 100 epochs: aligned version running on Kaggle P100; official version to push when a Kaggle slot frees
+- [x] Evaluate with 10 refinement rounds; memory probe (`src/memory_probe.py`)
 - [ ] Ablation without feedback (`--no-feedback`, Kaggle T4, running)
-- [ ] Own photos: 40–60 leaf-spot photos, Labelme, convert, fine-tune
-- [ ] Results table + figures
-- [ ] PPT (~12 slides, outline in README §11), rehearse viva answers (README §12). Done by Sat 31 Oct
+- [x] Synthetic leaf transfer from the final model: Dice 0.474 → 0.984 after fine-tuning
+- [ ] Own photos: 40–60 leaf-spot photos, Labelme, convert, fine-tune (needs you)
+- [x] Results table (README §10) + figures
+- [x] PPT: 14 slides, `presentation/FANet_ChaitanyaShinde_231070066.pptx`, built by `node presentation/build_deck.js` from the result CSVs
+- [ ] Rehearse: walk through the code and the deck, viva answers (README §12). By Sat 31 Oct
 
 ## Timeline
 
