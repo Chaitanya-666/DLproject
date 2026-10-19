@@ -550,7 +550,7 @@ About 12 slides:
 
 **Why transposed convolution and not plain resize?** It is a learned upsampling: the network learns how to fill in detail.
 
-**How did you handle augmentation with the memory?** Image, ground truth and memory mask get the same flip/90° rotation, and the prediction is rotated back before being stored. The official code does not do this, so its memory is misaligned for rotated samples.
+**How did you handle augmentation with the memory?** Like the official code: rotation (±35°) and flips move the image and ground truth, not the memory mask. I first "fixed" this by moving the memory too (`--memory-aug aligned`), but then the model learned to copy its memory: from an Otsu start its test Dice was 0.54, against 0.85 with a good memory. The misalignment forces the model to check the memory against the image, so it acts as a regulariser (§5.4, point 4).
 
 **Did you find anything odd in the paper's design?** Yes: the fmask head's output is thresholded with `> 0.5`, so no gradient reaches its convs; about 13% of the parameters never train. The useful attention comes from the previous mask.
 
