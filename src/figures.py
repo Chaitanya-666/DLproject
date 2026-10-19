@@ -1,11 +1,11 @@
 """Make the result figures for the PPT from the runs/ folder.
 
-    python -m src.figures --runs runs --out presentation/figures
+    python -m src.figures --runs runs --out presentation/figures [--main kvasir_official]
 
 Reads whatever exists (missing runs are skipped):
-    runs/kvasir/log.csv                  learning curves of the main run
+    runs/<main>/log.csv                  learning curves of the main run
     runs/kvasir_nofb/log.csv             the no-feedback ablation, drawn on the same axes
-    runs/kvasir/eval_test/results.csv    metrics after each test-time refinement round
+    runs/<main>/eval_test/results.csv    metrics after each test-time refinement round
     runs/*/eval_*/strips/*.png           image | ground truth | Otsu | round 1 | ...
 
 Writes PNGs into --out.
@@ -32,8 +32,8 @@ def read_csv(path):
     return {k: np.array([float(r[k]) for r in rows]) for k in rows[0]} if rows else None
 
 
-def learning_curves(runs, out):
-    main = read_csv(os.path.join(runs, "kvasir", "log.csv"))
+def learning_curves(runs, out, name):
+    main = read_csv(os.path.join(runs, name, "log.csv"))
     if main is None:
         return
     nofb = read_csv(os.path.join(runs, "kvasir_nofb", "log.csv"))
@@ -53,8 +53,8 @@ def learning_curves(runs, out):
     plt.close(fig)
 
 
-def refinement(runs, out):
-    res = read_csv(os.path.join(runs, "kvasir", "eval_test", "results.csv"))
+def refinement(runs, out, name):
+    res = read_csv(os.path.join(runs, name, "eval_test", "results.csv"))
     if res is None:
         return
     fig, ax = plt.subplots(figsize=(6, 3.8))
@@ -88,11 +88,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--runs", default="runs")
     ap.add_argument("--out", default="presentation/figures")
+    ap.add_argument("--main", default="kvasir_official", help="run folder used for curves and refinement")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
-    learning_curves(args.runs, args.out)
-    refinement(args.runs, args.out)
+    learning_curves(args.runs, args.out, args.main)
+    refinement(args.runs, args.out, args.main)
     for strip_dir in glob(os.path.join(args.runs, "*", "eval_*", "strips")):
         run, ev = strip_dir.split(os.sep)[-3:-1]
         strip_montage(strip_dir, os.path.join(args.out, f"strips_{run}_{ev}.png"))
