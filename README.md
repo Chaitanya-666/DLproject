@@ -312,7 +312,7 @@ sigmoid(logits) ─► undo flip/rot90 ─► memory.stage(i, pred)
 
 | Official code | Here | Reason |
 |---|---|---|
-| Rotates/flips the image but **not** the memory mask, and stores predictions made on the rotated image | Same flip/rot90 applied to image, ground truth and memory; prediction is un-rotated before storing | Otherwise the "look here" mask points at the wrong place. Only exactly invertible transforms are used, so ±35° rotation was replaced by 90° steps |
+| Rotates (±35°) / flips the image and ground truth but **not** the memory mask, and stores predictions made on the rotated image | Default `--memory-aug official` does exactly the same. `--memory-aug aligned` moves the memory too (flips + 90° steps, prediction un-rotated before storing) | We first used `aligned`, expecting it to be better. It made the model copy its memory and fail from an Otsu start (§5.4, point 4), so the official behaviour is the default |
 | Memory stored as run-length strings, loader order fixed (`shuffle=False`) to keep images matched to their masks | Memory is a tensor indexed by the dataset index returned with each sample | Simpler, and allows shuffling every epoch |
 | Batch 2, 500 epochs | Defaults batch 8, 200 epochs, early stop after 40 without improvement | Fits one Kaggle session. Use `--batch 2 --epochs 500 --early-stop 0` to match exactly |
 | `sigmoid` + `binary_cross_entropy` | `binary_cross_entropy_with_logits` | Same value, numerically safer |
@@ -323,7 +323,18 @@ sigmoid(logits) ─► undo flip/rot90 ─► memory.stage(i, pred)
 
 1. **The fmask head never learns.** Its output is thresholded with `> 0.5`, which has zero gradient, so the 3×3 and 1×1 convs inside every MixPool's fmask head receive **no gradient** and keep their random initial weights (verified: 48 parameter tensors, 982,088 parameters, ≈13% of the model, have `grad = None` after `backward()`). Only their BatchNorm running statistics change. In effect the fmask is a fixed random gate on the features; the learned part of the attention is the previous mask. A possible improvement: a straight-through estimator or soft (sigmoid) gating. This is a good "I read the code critically" point.
 2. **SE with a 1-unit bottleneck.** The official ResidualBlock builds SE with `reduction = out_channels`, so the hidden layer has exactly one unit. Copied as-is here for faithfulness.
-3. **Otsu on colonoscopy images** picks the bright regions (glare, lit mucosa), not specifically polyps. It is only a starting point; the second branch of MixPool means a bad start does not hurt much.
+3. **Otsu on colonoscopy images** picks the bright regions (glare, lit mucosa), not specifically polyps: on our 120 test images it marks 59.6% of each image on average, while polyps cover 14.2%. It is a poor starting mask.
+4. **The "misaligned memory" in the official code is doing real work.** Our first run (`runs/kvasir`, `--memory-aug aligned`, 256×256) kept the memory exactly aligned with every flip and rotation. Its test Dice during training was 0.844, but that number uses the model's own earlier predictions as memory. Started from Otsu, as the official test script does, it got Dice 0.536 after round 1 and 0.684 after 10 rounds. Feeding the same checkpoint different starting masks (one pass, 120 test images) shows why:
+
+   | Starting memory | Dice | Precision | Recall |
+   |---|---|---|---|
+   | Otsu (official test start) | 0.536 | 0.440 | 0.955 |
+   | all zeros | 0.517 | 0.965 | 0.415 |
+   | all ones | 0.383 | 0.267 | 0.993 |
+   | its own training-time memory | 0.848 | 0.886 | 0.881 |
+   | ground truth (oracle) | 0.958 | 0.971 | 0.956 |
+
+   The model largely **copies its memory**: give it nothing and recall falls to 0.41, give it everything and recall is 0.99. With perfectly aligned memory, copying is always rewarded. In the official code about two-thirds of training samples are rotated or flipped while their memory is not, so the memory is often wrong and the model must learn to check it against the image. That is why `--memory-aug official` is now the default; `runs/kvasir_official` tests it.
 
 ### 5.5 Detection view: boxes from masks
 
