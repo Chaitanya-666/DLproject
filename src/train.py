@@ -107,6 +107,8 @@ def main():
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--memory-update", choices=["on-improve", "always"], default="on-improve")
     ap.add_argument("--no-aug", action="store_true", help="turn augmentation off")
+    ap.add_argument("--no-feedback", action="store_true",
+                    help="ablation: memory stays all zeros, no previous mask is ever fed back")
     ap.add_argument("--init", help="checkpoint to start from (fine-tuning)")
     ap.add_argument("--early-stop", type=int, default=40, help="stop after N epochs without improvement (0 = never)")
     ap.add_argument("--device", default="auto")
@@ -127,8 +129,8 @@ def main():
                               num_workers=args.workers, drop_last=len(train_set) > args.batch)
     val_loader = DataLoader(val_set, batch_size=args.batch, shuffle=False, num_workers=args.workers)
 
-    train_mem = MaskMemory(train_set.images)
-    val_mem = MaskMemory(val_set.images)
+    train_mem = MaskMemory(train_set.images, feedback=not args.no_feedback)
+    val_mem = MaskMemory(val_set.images, feedback=not args.no_feedback)
 
     model = FANet().to(device)
     if args.init:

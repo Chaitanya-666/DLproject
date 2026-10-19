@@ -75,7 +75,8 @@ def main():
     has_gt = args.images is None
     data = SegmentationDataset(args.data, args.split, size) if has_gt else ImageFolderDataset(args.images, size)
     loader = DataLoader(data, batch_size=args.batch, shuffle=False)
-    memory = MaskMemory(data.images)
+    # A model trained with --no-feedback is also tested without feedback.
+    memory = MaskMemory(data.images, feedback=not state["args"].get("no_feedback", False))
 
     tag = args.split if has_gt else "images"
     out = args.out or os.path.join(os.path.dirname(args.ckpt), f"eval_{tag}")

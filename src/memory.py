@@ -37,10 +37,18 @@ def otsu_mask(rgb_uint8):
 
 
 class MaskMemory:
-    def __init__(self, images_uint8):
-        """images_uint8: (N,H,W,3) array, e.g. SegmentationDataset.images."""
-        self.masks = torch.from_numpy(np.stack([otsu_mask(img) for img in images_uint8]))
-        self.masks = self.masks.unsqueeze(1)  # (N,1,H,W) uint8
+    def __init__(self, images_uint8, feedback=True):
+        """images_uint8: (N,H,W,3) array, e.g. SegmentationDataset.images.
+
+        feedback=False is the ablation: every slot stays all zeros forever, so
+        the model never sees an earlier mask (MixPool falls back to its fmask).
+        """
+        self.feedback = feedback
+        if feedback:
+            masks = np.stack([otsu_mask(img) for img in images_uint8])
+        else:
+            masks = np.zeros(np.asarray(images_uint8).shape[:3], dtype=np.uint8)
+        self.masks = torch.from_numpy(masks).unsqueeze(1)  # (N,1,H,W) uint8
         self.staged = self.masks.clone()
 
     def __len__(self):
@@ -51,6 +59,8 @@ class MaskMemory:
 
     def stage(self, indices, probs):
         """Write this epoch's predictions to a staging copy (not yet used)."""
+        if not self.feedback:
+            return
         self.staged[indices.cpu()] = (probs.detach().cpu() > 0.5).to(torch.uint8)
 
     def commit(self):
@@ -63,7 +73,7 @@ class MaskMemory:
         self.masks[indices.cpu()] = self.staged[indices.cpu()]
 
     def reset_to_otsu(self, images_uint8):
-        self.__init__(images_uint8)
+        self.__init__(images_uint8, self.feedback)
 
     def state_dict(self):
         return {"masks": self.masks}
