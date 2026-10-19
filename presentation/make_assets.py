@@ -6,11 +6,10 @@ Writes into presentation/assets/:
     kvasir_example.png   one Kvasir-SEG test image | its ground-truth mask | overlay
     otsu_example.png     the same image | the Otsu starting mask FANet begins from
     leaf_examples.png    four synthetic leaf samples with their exact masks overlaid
-    strip_<run>.png      first refinement strips of a run, copied for the deck
+    strip_<run>.png      3 test images: image | truth | Otsu | round 1 | round 2 | last round
 """
 
 import os
-import shutil
 import sys
 from glob import glob
 
@@ -56,10 +55,22 @@ def main():
 
     for strip_dir in glob(os.path.join("runs", "*", "eval_test", "strips")):
         run = strip_dir.split(os.sep)[1]
-        files = sorted(glob(os.path.join(strip_dir, "*.png")))
+        files = sorted(glob(os.path.join(strip_dir, "*.png")))[:3]
         if files:
-            shutil.copy(files[0], os.path.join(OUT, f"strip_{run}.png"))
+            rows = [compact_strip(f) for f in files]
+            gap = np.full((GAP, rows[0].shape[1], 3), 255, dtype=np.uint8)
+            stacked = np.concatenate(sum(([r, gap] for r in rows), [])[:-1], axis=0)
+            Image.fromarray(stacked).save(os.path.join(OUT, f"strip_{run}.png"))
     print("assets:", sorted(os.listdir(OUT)))
+
+
+def compact_strip(path, tile=256, strip_gap=6):
+    """evaluate.py strips are image | truth | Otsu | round 1 | ... | round K.
+    Keep image, truth, Otsu, round 1, round 2 and the last round."""
+    strip = np.asarray(Image.open(path).convert("RGB"))
+    n = (strip.shape[1] + strip_gap) // (tile + strip_gap)
+    keep = [0, 1, 2, 3, 4, n - 1] if n > 6 else list(range(n))
+    return row([strip[:, k * (tile + strip_gap):k * (tile + strip_gap) + tile] for k in keep])
 
 
 if __name__ == "__main__":
