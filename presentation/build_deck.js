@@ -371,6 +371,7 @@ pres.addSection({ title: "Implementation" });
 pres.addSection({ title: "Results" });
 const MAIN = "kvasir_official";
 const main = evalRows(MAIN), mainBest = bestRound(main);
+const zeros = evalRows(MAIN, "eval_test_zeros");
 {
   const s = content("Results on the 120 Kvasir-SEG test images", "Results");
   const hdr = (t) => ({ text: t, options: { bold: true, color: HEX.lt1, fill: { color: HEX.dk2 }, align: "center" } });
@@ -383,8 +384,9 @@ const main = evalRows(MAIN), mainBest = bestRound(main);
   const aligned = evalRows("kvasir");
   const rows = [[hdr("Model"), hdr("Dice"), hdr("mIoU"), hdr("Recall"), hdr("Precision"), hdr("F2"), hdr("Notes")],
     line("FANet, paper", PAPER, "512×512, Table II", { bold: true }),
-    line("FANet, ours, best round", mainBest, mainBest ? `256×256, round ${mainBest.round} of 10` : "256×256", { bold: true }),
+    line("FANet, ours, official protocol", mainBest, mainBest ? `256×256, Otsu start, round ${mainBest.round}` : "256×256", { bold: true }),
     line("FANet, ours, round 1", main && main[0], "one pass from Otsu"),
+    line("FANet, ours, empty start", zeros && zeros[zeros.length - 1], "our variant: round 10 from zeros", { bold: true }),
     line("FANet, ours, 512×512", r512, r512 ? `Kaggle P100, round ${r512.round}` : "Kaggle P100"),
     line("No feedback (ablation)", nofb && nofb[0], "memory always zeros"),
     line("Aligned memory (our first run)", bestRound(aligned), "memory rotated with the image")];
@@ -394,26 +396,30 @@ const main = evalRows(MAIN), mainBest = bestRound(main);
   s.addText([
     { text: "Detection view: ", options: { bold: true } },
     { text: boxR !== undefined ? `boxes around the predicted blobs find ${(100 * boxR).toFixed(0)}% of the true polyp boxes at IoU ≥ 0.5 (box precision ${f3(mainBest.box_precision)}).` : "box metrics pending." },
-  ], { x: 0.6, y: 5.35, w: 12.1, h: 0.5, isTextBox: true, fontSize: 14, color: C.text1, margin: 0 });
-  caption(s, 0.6, 5.95, 12.1, "All scores are per image, averaged over the 120 test images, as in the authors' test script. Our split uses the paper's 880/120 ratio but is not guaranteed to be the same 120 images.", { size: 12, h: 0.6, italic: true });
+  ], { x: 0.6, y: 5.65, w: 12.1, h: 0.45, isTextBox: true, fontSize: 14, color: C.text1, margin: 0 });
+  caption(s, 0.6, 6.15, 12.1, "All scores are per image, averaged over the 120 test images, as in the authors' test script. Our split uses the paper's 880/120 ratio but is not guaranteed to be the same 120 images.", { size: 12, h: 0.6, italic: true });
   s.addNotes("Read the bold rows: paper vs ours. The no-feedback ablation shows what the memory adds. The aligned-memory row is our first attempt, explained on the finding slide.");
 }
 
 // ------------------------------------------------------------------ 11. refinement
 
 {
-  const s = content("One extra pass fixes most of the first guess", "Results");
+  const s = content("Refinement: an empty start climbs higher than Otsu", "Results");
   if (main) {
     const labels = main.map((r) => String(r.round));
-    s.addChart(pres.charts.LINE, ["dice", "precision", "recall"].map((k) => ({
-      name: k[0].toUpperCase() + k.slice(1), labels, values: main.map((r) => r[k]) })), {
-      x: 0.6, y: 1.45, w: 6.3, h: 4.6, chartColors: [HEX.accent1, HEX.accent2, HEX.accent3],
+    const lines = [{ name: "Dice, Otsu start (paper's protocol)", labels, values: main.map((r) => r.dice) }];
+    const colors = [HEX.accent2];
+    if (zeros) { lines.push({ name: "Dice, empty start (our variant)", labels, values: zeros.map((r) => r.dice) }); colors.push(HEX.accent1); }
+    lines.push({ name: "Paper, 512×512", labels, values: labels.map(() => PAPER.dice) });
+    colors.push(HEX.accent4);
+    s.addChart(pres.charts.LINE, lines, {
+      x: 0.6, y: 1.45, w: 6.3, h: 4.6, chartColors: colors,
       lineSize: 2.5, lineDataSymbol: "circle", lineDataSymbolSize: 7,
-      showTitle: true, title: "Test scores after each refinement round", titleFontSize: 14, titleColor: HEX.dk2, titleFontFace: "+mn-lt",
+      showTitle: true, title: "Test Dice after each refinement round", titleFontSize: 14, titleColor: HEX.dk2, titleFontFace: "+mn-lt",
       showLegend: true, legendPos: "b", legendFontSize: 12, legendFontFace: "+mn-lt",
       catAxisTitle: "refinement round", showCatAxisTitle: true, catAxisTitleFontSize: 12,
       catAxisLabelColor: HEX.accent4, valAxisLabelColor: HEX.accent4, catAxisLabelFontFace: "+mn-lt", valAxisLabelFontFace: "+mn-lt",
-      valAxisMinVal: 0.5, valAxisMaxVal: 1.0, valAxisLabelFormatCode: "0.00",
+      valAxisMinVal: 0.6, valAxisMaxVal: 0.95, valAxisLabelFormatCode: "0.00",
       valGridLine: { color: "E3E9EA", size: 0.5 }, catGridLine: { style: "none" },
     });
   }
@@ -422,9 +428,9 @@ const main = evalRows(MAIN), mainBest = bestRound(main);
   ["image", "truth", "Otsu", "round 1", "round 2", "round 10"].forEach((t, i) =>
     caption(s, 7.2 + i * 0.917, 4.38, 0.917, t, { size: 10, align: "center" }));
   s.addText(bullets(main ? [
-    `Round 1 starts from the poor Otsu mask: Dice ${f3(main[0].dice)}`,
-    `Round 2 jumps to ${f3(main[1].dice)}; best ${f3(mainBest.dice)} at round ${mainBest.round}`,
-    "Precision rises each round while recall dips slightly: the model trims its oversized first guess",
+    `From Otsu (marks ~60% of the image): ${f3(main[0].dice)} → ${f3(main[main.length - 1].dice)}; each round trims the oversized guess`,
+    zeros ? `From an empty mask: ${f3(zeros[0].dice)} → ${f3(zeros[zeros.length - 1].dice)}, above the paper's 0.880, same weights` : "empty start pending",
+    "Strips: image | truth | Otsu | round 1 | round 2 | round 10 (Otsu start)",
   ] : ["results pending"]), { x: 7.2, y: 4.85, w: 5.5, h: 1.6, isTextBox: true, fontSize: 13, color: C.text1, valign: "top", margin: 0, paraSpaceAfter: 4 });
   s.addNotes("This is the test-time iterative refinement from the paper. Each round feeds the previous round's mask back in. Most of the gain comes in the first two rounds.");
 }
@@ -438,7 +444,7 @@ const main = evalRows(MAIN), mainBest = bestRound(main);
   const pick = (p) => order.map((k) => { const r = p && p.find((x) => x.start === k); return r ? r.dice : 0; });
   const series = [], colors = [];
   if (pa) { series.push({ name: "memory moved with the image (our first run)", labels: order, values: pick(pa) }); colors.push(HEX.accent2); }
-  if (po) { series.push({ name: "memory not moved (authors' code, final)", labels: order, values: pick(po) }); colors.push(HEX.accent1); }
+  if (po) { series.push({ name: "memory not moved (authors' code, final model)", labels: order, values: pick(po) }); colors.push(HEX.accent1); }
   if (series.length) s.addChart(pres.charts.BAR, series, {
     x: 0.6, y: 1.45, w: 7.0, h: 4.75, barDir: "col", barGrouping: "clustered", barGapWidthPct: 60,
     chartColors: colors,
@@ -453,7 +459,7 @@ const main = evalRows(MAIN), mainBest = bestRound(main);
     "Our first run rotated the memory together with the image, which looked like a fix to the authors' code",
     "Its predictions followed the hint: given nothing, recall fell to 0.41; given everything, precision fell to 0.27",
     "In the authors' code about 2/3 of training samples are rotated or flipped while their memory is not, so the model must check the memory against the image",
-    "Keeping that behaviour made the model robust to a bad start",
+    "With it, an empty start works (0.83 vs 0.52), but an over-full start (all ones, Otsu) still pulls the first pass",
   ]), { x: 7.95, y: 1.5, w: 4.75, h: 4.7, isTextBox: true, fontSize: 14, color: C.text1, valign: "top", margin: 0, paraSpaceAfter: 8 });
   s.addNotes("Memory probe (src/memory_probe.py): one forward pass on the 120 test images from five different starting masks. A model that copies its memory swings with the hint; a model that checks it is stable. This is the most interesting result of the project: an apparent bug in the reference code acts as a regulariser.");
 }
@@ -489,10 +495,10 @@ pres.addSection({ title: "Conclusion" });
 {
   const s = pres.addSlide({ masterName: "TITLE_DARK", sectionTitle: "Conclusion" });
   s.addText("Conclusion", { placeholder: "title" });
-  s.addText(mainBest ? `FANet reproduced from scratch: test Dice ${f3(mainBest.dice)} on Kvasir-SEG at 256×256 (paper: 0.880 at 512×512)` : "FANet reproduced from scratch on Kvasir-SEG",
+  s.addText(mainBest ? `FANet reproduced from scratch on Kvasir-SEG at 256×256: Dice ${f3(mainBest.dice)} with the paper's protocol, ${zeros ? f3(zeros[zeros.length - 1].dice) : "—"} from an empty start (paper: 0.880 at 512×512)` : "FANet reproduced from scratch on Kvasir-SEG",
     { placeholder: "body" });
   const cols = [
-    ["Works", ["Feedback memory + MixPool + refinement", "Boxes from masks as a detection view", "Transfer to leaf spots by fine-tuning"]],
+    ["Works", ["Feedback memory + MixPool + refinement", "Found: aligned memory makes the model copy it", "Boxes from masks; transfer to leaf spots"]],
     ["Limits", ["One dataset of the paper's seven", "Our test split may differ from the paper's", "Checkpoint chosen on test images, as in the authors' code"]],
     ["Next", ["Real leaf photos annotated in Labelme", "Train the fmask head (soft gate)", "Video: reuse the previous frame's mask"]],
   ];
