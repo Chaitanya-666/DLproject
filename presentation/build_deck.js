@@ -388,7 +388,7 @@ const nofbRows = evalRows("kvasir_nofb"), nofbLast = nofbRows && nofbRows[0];
     line("FANet, ours, official protocol", mainBest, mainBest ? `256×256, Otsu start, round ${mainBest.round}` : "256×256", { bold: true }),
     line("FANet, ours, round 1", main && main[0], "one pass from Otsu"),
     line("FANet, ours, empty start", zeros && zeros[zeros.length - 1], "our variant: round 10 from zeros", { bold: true }),
-    line("FANet, ours, 512×512", r512, r512 ? `Kaggle T4, Otsu start, round ${r512.round}` : "Kaggle T4, running"),
+    line("FANet, ours, 512×512", r512, r512 ? `Kaggle T4, Otsu start, round ${r512.round}: resolution is not the gap` : "Kaggle T4, running"),
     line("No feedback (ablation)", nofb && nofb[0], "memory always zeros, one pass", { bold: true }),
     line("Aligned memory (our first run)", bestRound(aligned), "memory rotated with the image")];
   s.addTable(rows, { x: 0.6, y: 1.45, w: 12.1, colW: [3.3, 1.1, 1.1, 1.1, 1.2, 1.1, 3.2], fontSize: 13,
@@ -403,7 +403,7 @@ const nofbRows = evalRows("kvasir_nofb"), nofbLast = nofbRows && nofbRows[0];
   caption(s, 0.6, 6.4, 12.1, boxR !== undefined
     ? `Detection view: boxes around the predicted blobs find ${(100 * boxR).toFixed(0)}% of the true polyp boxes at IoU ≥ 0.5 (box precision ${f3(mainBest.box_precision)}, official protocol).`
     : "Detection view: box metrics pending.", { size: 12, h: 0.6, italic: true });
-  s.addNotes("Read the bold rows: paper vs ours, then the ablation. Be honest about the ablation: in our runs the feedback memory adds little; the paper's own ablation reports 0.852 -> 0.880. All scores are per image, averaged over the 120 test images as in the authors' test script; our split uses the paper's 880/120 ratio but may not be the same 120 images. The aligned-memory row is our first attempt, explained on the finding slide.");
+  s.addNotes("Read the bold rows: paper vs ours, then the ablation. Be honest about the ablation: in our runs the feedback memory adds little; the paper's own ablation reports 0.852 -> 0.880. All scores are per image, averaged over the 120 test images as in the authors' test script; our split uses the paper's 880/120 ratio but may not be the same 120 images. The aligned-memory row is our first attempt, explained on the finding slide. The 512x512 row trains at the paper's size for the paper's 100 epochs and is no better than 256, so input size does not explain the gap to the paper.");
 }
 
 // ------------------------------------------------------------------ 11. refinement
@@ -504,7 +504,7 @@ pres.addSection({ title: "Conclusion" });
     { placeholder: "body" });
   const cols = [
     ["Works", ["Full FANet from scratch; refinement adds +0.23 Dice from Otsu", "Found: aligned memory makes the model copy it", "Boxes from masks; transfer to leaf spots"]],
-    ["Limits", [nofbLast ? `Feedback adds little: no-feedback ablation ${f3(nofbLast.dice)}` : "Ablation pending", "One dataset of seven; our test split may differ", "Checkpoint chosen on test images, as in the authors' code"]],
+    ["Limits", [nofbLast ? `Feedback adds little: no-feedback ablation ${f3(nofbLast.dice)}` : "Ablation pending", "512×512 no better: gap is not resolution", "One dataset of seven; our test split may differ", "Checkpoint chosen on test images, as in the authors' code"]],
     ["Next", ["Real leaf photos annotated in Labelme", "Train the fmask head (soft gate)", "Video: reuse the previous frame's mask"]],
   ];
   cols.forEach(([h, items], i) => {
