@@ -15,7 +15,7 @@ DOI [10.1109/TNNLS.2022.3159394](https://doi.org/10.1109/TNNLS.2022.3159394) ·
 
 **PPT title:** *Polyp Segmentation for Colorectal Cancer Screening using FANet (Feedback Attention), with Transfer to Plant Disease Spotting.*
 
-**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. Pending: no-feedback ablation and 512×512 run on Kaggle; real leaf photos.
+**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. No-feedback ablation 0.883: the feedback adds little in our reproduction (§10). Pending: 512×512 run with the official augmentation (Kaggle); real leaf photos.
 
 **Weekend study guide:** [`docs/study_guide.pdf`](docs/study_guide.pdf) (four sessions with quizzes and hands-on tasks). **Deck:** [`presentation/FANet_ChaitanyaShinde_231070066.pptx`](presentation/FANet_ChaitanyaShinde_231070066.pptx).
 
@@ -518,15 +518,20 @@ All numbers: 120 Kvasir-SEG test images, per-image scores averaged (as the offic
 | **FANet, mine, official protocol** (Otsu start, round 10) | **0.8422** | **0.7790** | 0.9341 | 0.8345 | 0.8684 | 87 |
 | FANet, mine, Otsu start, round 1 | 0.6148 | 0.5115 | 0.9653 | 0.5298 | 0.7291 | |
 | **FANet, mine, empty start** (`--start zeros`, round 10) | **0.8999** | **0.8414** | 0.9001 | 0.9346 | 0.8977 | 88 |
-| FANet, mine, 512×512 (Kaggle P100) | *running* | | | | | |
-| No feedback (`--no-feedback`), mine | *running (Kaggle T4)* | | | | | |
+| **No feedback** (`--no-feedback`, memory always zeros; Kaggle T4) | **0.8830** | 0.8171 | 0.8968 | 0.9149 | 0.8863 | |
+| FANet, mine, 512×512, official aug (Kaggle T4, `--amp`) | *running* | | | | | |
 | First attempt, `--memory-aug aligned`, Otsu start, round 10 | 0.6835 | 0.5887 | 0.9578 | 0.6191 | 0.7749 | |
+| First attempt at 512×512 (aligned, Kaggle P100, 100 epochs), round 10 | 0.5044 | 0.4003 | 0.9673 | 0.4112 | 0.6386 | 14 |
 
 FPS: the round-10 figure from `results.csv`, RTX 5050 laptop GPU, batch 8 (round 1 is slower because it includes CUDA warm-up).
 
 **Detection view** (boxes from blobs, IoU ≥ 0.5, `metrics.BoxAverager`): official protocol box precision 0.685, box recall 0.800, mean box IoU 0.881; empty start box precision 0.836, box recall 0.896.
 
-**How to read this.** Under the paper's own test protocol we get Dice 0.842, 0.038 below the paper. Likely reasons: half the paper's input resolution (the 512 run tests this), batch 8 instead of 2, and a test split that may hold different images. Starting refinement from an empty mask instead of Otsu gives 0.900 with the same weights. That is a change to the test procedure, not to the model, so it is reported separately from the reproduction (§5.4, point 5). Both rows pick the checkpoint on the test images, as the authors' code does, so both are slightly optimistic.
+**The ablation is the most important row.** The same network with the feedback switched off (memory always zeros; a single pass, since refinement has nothing to feed back) reaches **0.883**: better than our FANet under the paper's protocol (0.842) and only 0.017 below our best FANet setting (empty start, 0.900). So in our reproduction the feedback memory adds little, and starting it from Otsu hurts. The paper's own ablation (B1, without MixPool) is 0.852, i.e. the paper reports a larger gain from its method than we could reproduce. Caveat: the ablation run was started before `--memory-aug official` existed, so it trained with flips and 90° rotations plus brightness jitter instead of ±35° rotations (the memory is all zeros, so alignment itself does not matter).
+
+The aligned 512 run shows the memory-copying failure again at the paper's resolution: 0.827 during training (with its own memory), 0.504 from an Otsu start.
+
+**How to read the rest.** Under the paper's own test protocol we get Dice 0.842, 0.038 below the paper. Likely reasons: half the paper's input resolution (the 512 run tests this), batch 8 instead of 2, and a test split that may hold different images. Starting refinement from an empty mask instead of Otsu gives 0.900 with the same weights. That is a change to the test procedure, not to the model, so it is reported separately from the reproduction (§5.4, point 5). Both rows pick the checkpoint on the test images, as the authors' code does, so both are slightly optimistic.
 
 | Own dataset: synthetic leaf spots (12 test images) | Dice | mIoU | Box recall |
 |---|---|---|---|
