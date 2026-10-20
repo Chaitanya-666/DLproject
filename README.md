@@ -595,6 +595,8 @@ About 12 slides:
 
 **What Dice did you get, and why is it below the paper?** 0.842 with the paper's test protocol (Otsu start, 10 refinement rounds) at 256×256, against 0.880 in the paper at 512×512. Reasons: half the resolution, batch 8 instead of 2, and possibly a different set of 120 test images. The 512×512 run checks the resolution part.
 
+**What does the feedback actually add?** Less than the paper suggests. Our no-feedback ablation (same network, memory always zeros) scores 0.883. FANet scores 0.842 from the paper's Otsu start and 0.900 from an empty start, so the memory is worth about +0.02 at best and costs 0.04 with the Otsu start. The paper's own ablation reports a larger gain (0.852 → 0.880). Possible reasons: our larger batch and different augmentation, a different test split, and the 13% of parameters in the fmask heads that never train.
+
 **How did you get 0.900?** Same weights, different test-time start: an empty mask instead of Otsu. Otsu marks about 60% of each image, so the first prediction over-segments and refinement trims it only slowly. An empty start avoids that. It is our variant of the test procedure, so the headline reproduction number stays 0.842.
 
 **How do you get detection from segmentation?** Connected components of the mask → one bounding box per blob → match to true boxes by IoU ≥ 0.5 → box precision/recall.
