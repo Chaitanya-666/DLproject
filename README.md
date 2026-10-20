@@ -15,7 +15,7 @@ DOI [10.1109/TNNLS.2022.3159394](https://doi.org/10.1109/TNNLS.2022.3159394) ·
 
 **PPT title:** *Polyp Segmentation for Colorectal Cancer Screening using FANet (Feedback Attention), with Transfer to Plant Disease Spotting.*
 
-**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. No-feedback ablation 0.883: the feedback adds little in our reproduction (§10). Pending: 512×512 run with the official augmentation (Kaggle); real leaf photos.
+**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. No-feedback ablation 0.883: the feedback adds little in our reproduction (§10). 512×512 run (20 Oct): 0.831, so resolution does not explain the gap. Pending: real leaf photos.
 
 **Weekend study guide:** [`docs/study_guide.pdf`](docs/study_guide.pdf) (four sessions with quizzes and hands-on tasks). **Deck:** [`presentation/FANet_ChaitanyaShinde_231070066.pptx`](presentation/FANet_ChaitanyaShinde_231070066.pptx).
 
@@ -519,7 +519,7 @@ All numbers: 120 Kvasir-SEG test images, per-image scores averaged (as the offic
 | FANet, mine, Otsu start, round 1 | 0.6148 | 0.5115 | 0.9653 | 0.5298 | 0.7291 | |
 | **FANet, mine, empty start** (`--start zeros`, round 10) | **0.8999** | **0.8414** | 0.9001 | 0.9346 | 0.8977 | 88 |
 | **No feedback** (`--no-feedback`, memory always zeros; Kaggle T4) | **0.8830** | 0.8171 | 0.8968 | 0.9149 | 0.8863 | |
-| FANet, mine, 512×512, official aug (Kaggle T4, `--amp`) | *running* | | | | | |
+| FANet, mine, 512×512, official aug (Kaggle T4, `--amp`, batch 4, 100 epochs), Otsu start, round 10 | 0.8305 | 0.7576 | 0.9166 | 0.8312 | 0.8596 | 13 |
 | First attempt, `--memory-aug aligned`, Otsu start, round 10 | 0.6835 | 0.5887 | 0.9578 | 0.6191 | 0.7749 | |
 | First attempt at 512×512 (aligned, Kaggle P100, 100 epochs), round 10 | 0.5044 | 0.4003 | 0.9673 | 0.4112 | 0.6386 | 14 |
 
@@ -531,7 +531,9 @@ FPS: the round-10 figure from `results.csv`, RTX 5050 laptop GPU, batch 8 (round
 
 The aligned 512 run shows the memory-copying failure again at the paper's resolution: 0.827 during training (with its own memory), 0.504 from an Otsu start.
 
-**How to read the rest.** Under the paper's own test protocol we get Dice 0.842, 0.038 below the paper. Likely reasons: half the paper's input resolution (the 512 run tests this), batch 8 instead of 2, and a test split that may hold different images. Starting refinement from an empty mask instead of Otsu gives 0.900 with the same weights. That is a change to the test procedure, not to the model, so it is reported separately from the reproduction (§5.4, point 5). Both rows pick the checkpoint on the test images, as the authors' code does, so both are slightly optimistic.
+**Resolution is not the missing piece.** The corrected 512×512 run (official augmentation, 100 epochs as in the paper, best epoch 77) scores **0.831** under the paper's protocol, slightly *below* our 256×256 run (0.842). With its own training-time memory it reached 0.879 on the test images, almost exactly the paper's 0.880, but that number uses masks the model itself produced during training, so it is not the paper's protocol. (Its FPS, 13, is on the Kaggle T4, not comparable with the laptop figures.) The empty-start evaluation of this checkpoint is still to do.
+
+**How to read the rest.** Under the paper's own test protocol we get Dice 0.842, 0.038 below the paper. Not the input size: the 512×512 run scores 0.831, no better. Remaining candidates: batch 8 (4 at 512) instead of 2, a test split that may hold different images, and run-to-run variance (we trained each setting once). Starting refinement from an empty mask instead of Otsu gives 0.900 with the same weights. That is a change to the test procedure, not to the model, so it is reported separately from the reproduction (§5.4, point 5). Both rows pick the checkpoint on the test images, as the authors' code does, so both are slightly optimistic.
 
 | Own dataset: synthetic leaf spots (12 test images) | Dice | mIoU | Box recall |
 |---|---|---|---|
@@ -593,7 +595,7 @@ About 12 slides:
 
 **Did you find anything odd in the paper's design?** Yes: the fmask head's output is thresholded with `> 0.5`, so no gradient reaches its convs; about 13% of the parameters never train. The useful attention comes from the previous mask.
 
-**What Dice did you get, and why is it below the paper?** 0.842 with the paper's test protocol (Otsu start, 10 refinement rounds) at 256×256, against 0.880 in the paper at 512×512. Reasons: half the resolution, batch 8 instead of 2, and possibly a different set of 120 test images. The 512×512 run checks the resolution part.
+**What Dice did you get, and why is it below the paper?** 0.842 with the paper's test protocol (Otsu start, 10 refinement rounds) at 256×256, against 0.880 in the paper at 512×512. Resolution is ruled out: our 512×512 run gets 0.831, no better. Remaining reasons: batch 8 instead of 2, possibly a different set of 120 test images, and single runs (no seeds averaged). Our no-feedback ablation (0.883) suggests the paper's protocol, not the network, is what costs the points.
 
 **What does the feedback actually add?** Less than the paper suggests. Our no-feedback ablation (same network, memory always zeros) scores 0.883. FANet scores 0.842 from the paper's Otsu start and 0.900 from an empty start, so the memory is worth about +0.02 at best and costs 0.04 with the Otsu start. The paper's own ablation reports a larger gain (0.852 → 0.880). Possible reasons: our larger batch and different augmentation, a different test split, and the 13% of parameters in the fmask heads that never train.
 
