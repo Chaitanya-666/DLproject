@@ -131,7 +131,7 @@ python -m src.model            # should print (2, 1, 256, 256) and 7,720,266
 
 == The story in six lines (memorise these)
 + FANet feeds each image's last predicted mask back into every encoder and decoder block (MixPool) and refines its answer at test time.
-+ We built it from scratch and trained on Kvasir-SEG at 256×256: Dice *0.842* with the paper's protocol (paper: 0.880 at 512×512).
++ We built it from scratch and trained on Kvasir-SEG at 256×256: Dice *0.842* with the paper's protocol (paper: 0.880 at 512×512). Training at 512×512 too gives 0.831, so the gap is not resolution.
 + Our first attempt "fixed" the authors' augmentation by rotating the memory with the image. That made the model *copy* its memory: 0.684. The authors' misalignment acts as a regulariser.
 + The final model still over-trusts an over-full start (Otsu marks 60% of the image). Starting from an empty mask instead gives *0.900* with the same weights; this is our test-time variant, reported separately.
 + Honest ablation: with the feedback switched off (memory always zeros) the same network scores *0.883*. So in our runs the memory adds little (+0.017 from an empty start) and hurts from Otsu; the paper reports a bigger gain (0.852 → 0.880).
@@ -147,6 +147,7 @@ python -m src.model            # should print (2, 1, 256, 256) and 7,720,266
   [Paper (512×512)], [Dice 0.880, mIoU 0.815],
   [Ours, paper protocol], [Dice 0.842, mIoU 0.779, recall 0.934, precision 0.835],
   [Ours, empty start], [Dice 0.900, mIoU 0.841],
+  [Ours, 512×512 (Kaggle)], [Dice 0.831, paper protocol: no better than 256],
   [No-feedback ablation], [Dice 0.883 (one pass, memory always zeros)],
   [First attempt (aligned memory)], [Dice 0.684 at 256; 0.504 at 512],
   [Speed], [about 87 images/s on the RTX 5050],
@@ -158,7 +159,7 @@ python -m src.model            # should print (2, 1, 256, 256) and 7,720,266
   Present the deck out loud, once, timing yourself (target 12–15 minutes). For each slide, say its title sentence first, then one or two supporting points. The speaker notes in the `.pptx` have a prompt for every slide. Then answer the README §12 questions out loud, without looking.
 ]
 
-#note[If the Kaggle results (no-feedback ablation, 512×512 run) have arrived, they are in the results table and slide 10. Rebuild the deck with `node presentation/build_deck.js` after any `kaggle/offload.sh pull`.]
+#note[Both Kaggle results (no-feedback ablation, 512×512 run) are in the results table and slide 10. Rebuild the deck with `node presentation/build_deck.js` after any `kaggle/offload.sh pull`.]
 
 = Answers <answers>
 
