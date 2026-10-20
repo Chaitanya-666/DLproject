@@ -12,7 +12,10 @@ dataset/*
 *.pt
 *.pth
 *.ckpt
-runs/
+# runs/: only the small result tables are tracked (weights, masks, strips stay local)
+runs/**
+!runs/**/
+!runs/**/*.csv
 wandb/
 
 # Paper PDFs
