@@ -556,6 +556,15 @@ The aligned 512 run shows the memory-copying failure again at the paper's resolu
 | Kvasir model, no fine-tuning (best of 3 rounds) | 0.474 | 0.382 | 0.364 |
 | After fine-tuning from the Kvasir weights, 60 epochs | 0.984 | 0.969 | 0.909 |
 
+| Real leaf photos: LDSD test (118 photos, LDSD's masks), 10 rounds | Dice, Otsu start | Dice, empty start |
+|---|---|---|
+| Kvasir model, no fine-tuning | 0.010 (round 1: 0.129) | 0.004 |
+| Fine-tuned from the Kvasir weights on 470 LDSD photos, 60 epochs, lr 5e-5 | 0.670 | 0.681 |
+| From random weights on the same 470 photos, 60 epochs, lr 1e-4 | 0.679 | 0.667 |
+| Fine-tuned on my 30 Roboflow-labelled photos | pending | pending |
+
+Real leaves are much harder than polyps (many small scattered spots, cluttered backgrounds, coarse reference masks). With 470 photos, starting from the polyp weights hardly helps (0.681 vs 0.679); transfer should matter more with the 30-photo Roboflow set.
+
 The synthetic leaves are much easier than real photos (clean shapes, plain backgrounds); real Labelme-annotated photos are the next step (§9.2).
 
 ---

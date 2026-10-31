@@ -596,10 +596,10 @@ All on the 118 LDSD test photos, scored against LDSD's masks, 256×256.
   [*Model*], [*Dice (Otsu start)*], [*Dice (empty start)*],
   [Polyp model, no fine-tuning], [0.010 (round 1: 0.129)], [0.004],
   [Fine-tuned from the polyp weights on 470 LDSD photos (their masks)], [*0.670*], [*0.681*],
-  [Trained from random weights on the same 470 photos], [LDSD_SC_OTSU], [LDSD_SC_ZERO],
+  [Trained from random weights on the same 470 photos], [0.678], [0.667],
   [*Fine-tuned on my 30 Roboflow-labelled photos*], [pending], [pending],
 )
-Scores after 10 refinement rounds. *Reading.* Without fine-tuning the polyp model is useless on leaves (Dice 0.13 after one round), and refinement makes it worse: its masks shrink to almost nothing (0.010 after 10 rounds). That is a *domain gap*: it learned what a polyp looks like, not what a disease spot looks like. Fine-tuning on leaf photos lifts it to *0.67–0.68*. Leaves are harder than polyps: many small scattered spots instead of one blob, cluttered real-world backgrounds, and coarse reference masks. LDSD_SC_NOTE
+Scores after 10 refinement rounds. *Reading.* Without fine-tuning the polyp model is useless on leaves (Dice 0.13 after one round), and refinement makes it worse: its masks shrink to almost nothing (0.010 after 10 rounds). That is a *domain gap*: it learned what a polyp looks like, not what a disease spot looks like. Fine-tuning on leaf photos lifts it to *0.67–0.68*. Leaves are harder than polyps: many small scattered spots instead of one blob, cluttered real-world backgrounds, and coarse reference masks. *Does the polyp training help?* Hardly: from random weights the same 470 photos give 0.678 against 0.681 fine-tuned. With 470 photos the leaf task is learnable on its own; transfer should matter more with few images, which the 30-photo Roboflow set will test.
 
 == The first own dataset: synthetic leaves <sec-synthetic>
 Before Roboflow, we generated 60 leaf images by script (`src/make_synthetic.py`): a green ellipse leaf with veins, 1–4 irregular brown spots with a yellow halo, blur, lighting gradient and noise. The masks are exact because we drew the spots. The polyp model scored Dice 0.474 on them before fine-tuning and 0.984 after. Too easy (clean shapes, plain backgrounds), which is why the real photos matter.
