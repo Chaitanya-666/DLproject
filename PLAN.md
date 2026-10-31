@@ -1,4 +1,4 @@
-# Plan (v3, updated 19 Oct 2026)
+# Plan (v4, updated 31 Oct 2026)
 
 **Locked topic:** FANet (Tomar et al., IEEE TNNLS 2023) on Kvasir-SEG. Registered 13 Oct, row 29 of the sheet.
 Everything about the paper, the code and how to run it is in [README.md](README.md).
@@ -19,10 +19,18 @@ History: v1 CondInst ([docs/v1-condinst-plan.md](docs/v1-condinst-plan.md)) was 
 - [x] Evaluate with 10 refinement rounds; memory probe (`src/memory_probe.py`)
 - [ ] Ablation without feedback (`--no-feedback`, Kaggle T4, running)
 - [x] Synthetic leaf transfer from the final model: Dice 0.474 → 0.984 after fine-tuning
-- [ ] Own photos: 40–60 leaf-spot photos, Labelme, convert, fine-tune (needs you)
+- [x] ~~Own photos with Labelme~~ replaced by Roboflow (faculty requirement, 30 Oct)
+- [x] Audit, 31 Oct: model, results, deck, study guide re-checked; mask-loading bug for class-index masks fixed
+- [x] LDSD real leaf photos downloaded and split (470 / 118); 30-photo Roboflow upload set picked
+- [x] Leaf transfer baselines on LDSD: zero-shot, fine-tuned, from scratch (README §10)
+- [ ] **Roboflow (you):** account, upload `data/roboflow_upload/`, label spots by hand, version with flips/rotations, export, screenshots
+- [ ] Convert the export (`src.roboflow_to_masks`), fine-tune, add to deck + notebook
+- [x] Project book `docs/project_book.pdf` (read before Tuesday)
+- [x] Submission notebook `notebooks/FANet_project.ipynb`
 - [x] Results table (README §10) + figures
 - [x] PPT: 14 slides, `presentation/FANet_ChaitanyaShinde_231070066.pptx`, built by `node presentation/build_deck.js` from the result CSVs
-- [ ] Rehearse: walk through the code and the deck, viva answers (README §12). By Sat 31 Oct
+- [ ] Rehearse the talk (project book ch. 12) with Claude as examiner, Mon 2 Nov
+- [ ] **Tue 3 Nov: explain the project topic (basics)**. Lab exam later: 20-mark quiz + project presentation
 
 ## Timeline
 

@@ -15,9 +15,9 @@ DOI [10.1109/TNNLS.2022.3159394](https://doi.org/10.1109/TNNLS.2022.3159394) ·
 
 **PPT title:** *Polyp Segmentation for Colorectal Cancer Screening using FANet (Feedback Attention), with Transfer to Plant Disease Spotting.*
 
-**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. No-feedback ablation 0.883: the feedback adds little in our reproduction (§10). 512×512 run (20 Oct): 0.831, so resolution does not explain the gap. Pending: real leaf photos.
+**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. No-feedback ablation 0.883: the feedback adds little in our reproduction (§10). 512×512 run (20 Oct): 0.831, so resolution does not explain the gap. **31 Oct:** audit passed (numbers reproduce exactly); mask-loading bug for class-index masks fixed; own dataset moved to **Roboflow** (faculty requirement, 30 Oct), using real leaf photos from LDSD (§9.0). Pending: your Roboflow labels.
 
-**Weekend study guide:** [`docs/study_guide.pdf`](docs/study_guide.pdf) (four sessions with quizzes and hands-on tasks). **Deck:** [`presentation/FANet_ChaitanyaShinde_231070066.pptx`](presentation/FANet_ChaitanyaShinde_231070066.pptx).
+**Project book (read this first):** [`docs/project_book.pdf`](docs/project_book.pdf): the whole project from the basics, with a Tuesday presentation chapter. **Submission notebook:** [`notebooks/FANet_project.ipynb`](notebooks/FANet_project.ipynb). **Weekend study guide:** [`docs/study_guide.pdf`](docs/study_guide.pdf) (four sessions with quizzes and hands-on tasks). **Deck:** [`presentation/FANet_ChaitanyaShinde_231070066.pptx`](presentation/FANet_ChaitanyaShinde_231070066.pptx).
 
 This README is the whole project's documentation. Read it top to bottom once and you should be able to run everything, explain every design choice, and answer viva questions.
 
@@ -459,6 +459,22 @@ python -m src.evaluate --ckpt runs/kvasir/best.pt --images some_folder/
 ---
 
 ## 9. Your own dataset
+
+**Faculty requirement (30 Oct 2026):** the own dataset must be made in **Roboflow** ("manual dataset"); if building one from scratch does not suit the project, take a separate image set and apply flips/rotations in Roboflow to show it was used. Deliverables: Roboflow dataset, PPT, notebook.
+
+### 9.0 Roboflow leaf-disease dataset (the one to present)
+
+- **Photos:** LDSD, *Leaf disease segmentation dataset* (Kaggle `fakhrealam9537/leaf-disease-segmentation-dataset`, CC0; 588 real photos from PlantDoc with disease masks). Downloaded to `data/LDSD/` (not committed), split 470 / 118 with `python -m src.split --data data/LDSD/data/data --test 0.2`. The 118 test photos are the leaf test set.
+- **Manual labels:** 30 photos from the 470 training pool (seeded pick: at least 300 px, disease covering 3–50%; list in `dataset/custom/roboflow_upload_list.txt`, files in `data/roboflow_upload/`) are uploaded to Roboflow **without masks** and the disease spots are outlined by hand. LDSD's own masks for those 30 then measure how good the hand labels are.
+- **Roboflow steps:** Semantic Segmentation project, class `disease` → upload → label with Polygon / Smart Polygon → split 80/20/0 → version: Auto-Orient, Resize stretch 256×256; Flip (h+v), 90° Rotate, Rotation ±15°, Brightness ±15%; 3× → export *Semantic Segmentation Masks* (or *COCO Segmentation* for an Instance Segmentation project). Full walkthrough: `docs/project_book.pdf`, chapter 10.
+- **Convert, fine-tune, test:**
+  ```bash
+  python -m src.roboflow_to_masks --src <unzipped export> --out dataset/custom/roboflow_leaf --compare data/LDSD/data/data
+  python -m src.train --data dataset/custom/roboflow_leaf --out runs/roboflow_leaf --init runs/kvasir_official/best.pt --epochs 60 --lr 5e-5 --amp
+  python -m src.evaluate --ckpt runs/roboflow_leaf/best.pt --data data/LDSD/data/data --split test --iters 10 --out runs/roboflow_leaf_ldsd/eval_test
+  ```
+  Roboflow masks hold class indices (0/1), not 0/255; `load_mask` handles both since the 31 Oct fix.
+
 
 The brief asks for a small dataset you made yourself, and an explanation of **how it was generated**. Colonoscopy images cannot be collected at home, so we keep the **task** (segment irregular blobs on a textured surface) and change the **subject** to **disease spots on leaves**. Two ways, which can be combined.
 

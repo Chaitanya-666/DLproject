@@ -62,9 +62,24 @@ def load_image(path, size):
 
 
 def load_mask(path, size):
-    # Kvasir masks are JPEGs, so edges carry compression noise: threshold at 127.
-    m = Image.open(path).convert("L").resize((size, size), Image.NEAREST)
-    return (np.asarray(m) > 127).astype(np.uint8)
+    """Binary 0/1 mask at size x size, whatever the file's encoding:
+    - 0/255 greyscale (Kvasir: JPEGs, so edges carry compression noise);
+    - class-index PNGs, 0 = background, 1.. = class (Roboflow's semantic-mask
+      export; palette PNGs in LDSD). Palette images are read as indices, since
+      converting them to grey would turn index 1 into a colour's brightness;
+    - colour masks (half of LDSD: lesion drawn in red, value about 128).
+    Rule: take the brightest channel per pixel. If the mask's largest value is
+    at most 10, it holds class indices and anything non-zero is foreground;
+    otherwise threshold at half the largest value. A fixed 127 threshold would
+    read the index masks and the red LDSD masks as empty."""
+    m = Image.open(path)
+    m = m if m.mode in ("P", "L") else m.convert("RGB")
+    m = np.asarray(m.resize((size, size), Image.NEAREST))
+    if m.ndim == 3:
+        m = m.max(axis=2)
+    top = int(m.max())
+    threshold = 0 if top <= 10 else top / 2
+    return (m > threshold).astype(np.uint8)
 
 
 class SegmentationDataset(Dataset):
