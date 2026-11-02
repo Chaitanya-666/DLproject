@@ -30,7 +30,7 @@ History: v1 CondInst ([docs/v1-condinst-plan.md](docs/v1-condinst-plan.md)) was 
 - [x] Submission notebook `notebooks/FANet_project.ipynb`
 - [x] Results table (README §10) + figures
 - [x] PPT: 14 slides, `presentation/FANet_ChaitanyaShinde_231070066.pptx`, built by `node presentation/build_deck.js` from the result CSVs
-- [ ] Rehearse the talk (project book ch. 12) with Claude as examiner, Mon 2 Nov
+- [ ] Rehearse the talk (project book ch. 13) with Claude as examiner, Mon 2 Nov
 - [x] Tuesday briefing chapter in the project book (ch. 1: 2-minute script, status, next steps, questions for ma'am), 2 Nov
 - [ ] **Tue 3 Nov: explain the project topic (basics)**. Lab exam later: 20-mark quiz + project presentation
 

@@ -40,7 +40,7 @@
     #set align(left)
     *How to read this.* Front to back, once. Every chapter starts from zero and ends with questions: answer them *out loud* before going on.
 
-    *Tuesday 3 Nov (explain the project to ma'am):* read @ch-brief first (what to say, what is done, what comes next, what to ask her), then @ch-onepage, @ch-problem, @ch-basics, @ch-paper, @ch-arch, @ch-results and @ch-tuesday.
+    *Tuesday 3 Nov (explain the project to ma'am):* start with @sec-morning (the 40-minute morning plan), then read @ch-brief (what to say, what is done, what comes next, what to ask her), then @ch-onepage, @ch-problem, @ch-basics, @ch-paper, @ch-arch, @ch-results and @ch-tuesday.
 
     *Boxes.* #box(fill: rgb("#e6f2f3"), inset: 2pt)[blue] = the fact to remember; #box(fill: rgb("#fff5e0"), inset: 2pt)[yellow] = a sentence you can say in the presentation as it is.
   ]
@@ -53,6 +53,19 @@
 = Tuesday 3 November: the briefing <ch-brief>
 
 Tuesday is not the final presentation. Ma'am wants each student to *explain the topic*: what you are building, the basics behind it, and how far you are. This chapter is that conversation, prepared. The rest of the book is the depth behind every sentence here.
+
+== Tuesday morning, before the lab (40 minutes) <sec-morning>
+#key[Today (Tue 3 Nov) is an explanation *at a reasonable level*, not the final submission. Nobody expects the Roboflow part to be finished. "The core model is trained and tested; my Roboflow dataset is being labelled" is an honest and complete status.]
+
++ *Read (20 min):* this chapter (@ch-brief), then @ch-roboflow (why Roboflow, why leaves, the steps). If you have 5 more minutes: MixPool (@sec-mixpool), the one block she is most likely to ask about.
++ *Say it out loud (5 min):* the 2-minute explanation below, six points, *without looking*. Then define CNN, segmentation, detection, Dice and hard attention in one sentence each.
++ *Self-quiz (10 min):* answer out loud the "Check yourself" box at the end of this chapter and the questions in @ch-tuesday ("Questions you will probably get"). If one stalls you, read only its answer, then say it again.
++ *Ask her the two questions that decide the remaining work* (full list in "Questions to ask ma'am" below):
+  - "Are public leaf photos that I label myself acceptable for the Roboflow dataset, or must I take the photos myself?"
+  - "Should the final notebook train the model end to end, or may it load my trained weights and show evaluation and results?"
++ *Write down her answers* right after the lab: they decide whether you photograph leaves yourself and how the notebook is finished.
+
+#say[Why Roboflow, why leaves: ma'am asked for an own dataset built in Roboflow. I cannot collect colonoscopy images as a student, so I kept the same task, segmenting irregular spots on a textured surface, and changed the domain to diseased leaves. I label the spots by hand in Roboflow, that is the "from scratch" part, and use its flips and rotations for augmentation, then fine-tune my polyp model on it.]
 
 == What you are building, in 2 minutes
 Say these six points in this order. Each one points to the chapter that backs it up if she asks for more.
