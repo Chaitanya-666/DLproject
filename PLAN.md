@@ -23,13 +23,15 @@ History: v1 CondInst ([docs/v1-condinst-plan.md](docs/v1-condinst-plan.md)) was 
 - [x] Audit, 31 Oct: model, results, deck, study guide re-checked; mask-loading bug for class-index masks fixed
 - [x] LDSD real leaf photos downloaded and split (470 / 118); 30-photo Roboflow upload set picked
 - [x] Leaf transfer baselines on LDSD: zero-shot, fine-tuned, from scratch (README §10)
-- [ ] **Roboflow (you):** account, upload `data/roboflow_upload/`, label spots by hand, version with flips/rotations, export, screenshots
+- [x] Roboflow account + project `leaf-disease-spots` + 30 photos uploaded (user, by 2 Nov)
+- [ ] **Roboflow (you):** label spots by hand, version with flips/rotations, export, screenshots
 - [ ] Convert the export (`src.roboflow_to_masks`), fine-tune, add to deck + notebook
 - [x] Project book `docs/project_book.pdf` (read before Tuesday)
 - [x] Submission notebook `notebooks/FANet_project.ipynb`
 - [x] Results table (README §10) + figures
 - [x] PPT: 14 slides, `presentation/FANet_ChaitanyaShinde_231070066.pptx`, built by `node presentation/build_deck.js` from the result CSVs
 - [ ] Rehearse the talk (project book ch. 12) with Claude as examiner, Mon 2 Nov
+- [x] Tuesday briefing chapter in the project book (ch. 1: 2-minute script, status, next steps, questions for ma'am), 2 Nov
 - [ ] **Tue 3 Nov: explain the project topic (basics)**. Lab exam later: 20-mark quiz + project presentation
 
 ## Timeline
@@ -44,5 +46,4 @@ History: v1 CondInst ([docs/v1-condinst-plan.md](docs/v1-condinst-plan.md)) was 
 
 ## Questions still open for ma'am
 
-- Is a synthetic (script-generated) dataset acceptable for the "own dataset", or must it be photos we collected? (Plan covers both.)
-- Is segmentation alone enough, or should the detection view (boxes from masks) be shown too? (Implemented either way.)
+The full list, with the assumption used until she answers, is in the project book, §1.5 (`docs/project_book.pdf`). The two that decide the remaining work: are public photos labelled by me acceptable for the Roboflow dataset, and must the notebook train end to end or may it load weights?

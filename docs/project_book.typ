@@ -34,11 +34,13 @@
   Chaitanya Shinde · 231070066 \
   B.Tech Computer Engineering, Sem VII · Deep Learning mini-project, 2026–27
   #v(0.5cm)
-  Written 31 Oct 2026 · repo `DLproject`, after the audit of the same day
+  Written 31 Oct 2026 · updated 2 Nov 2026 with the Tuesday briefing (@ch-brief) · repo `DLproject`
   #v(2cm)
   #block(width: 85%, inset: 10pt, stroke: 0.6pt + accent, radius: 3pt)[
     #set align(left)
-    *How to read this.* Front to back, once. Every chapter starts from zero and ends with questions: answer them *out loud* before going on. If you only have two hours before Tuesday, read @ch-onepage, @ch-problem, @ch-paper, @ch-arch, @ch-results and @ch-tuesday, in that order.
+    *How to read this.* Front to back, once. Every chapter starts from zero and ends with questions: answer them *out loud* before going on.
+
+    *Tuesday 3 Nov (explain the project to ma'am):* read @ch-brief first (what to say, what is done, what comes next, what to ask her), then @ch-onepage, @ch-problem, @ch-basics, @ch-paper, @ch-arch, @ch-results and @ch-tuesday.
 
     *Boxes.* #box(fill: rgb("#e6f2f3"), inset: 2pt)[blue] = the fact to remember; #box(fill: rgb("#fff5e0"), inset: 2pt)[yellow] = a sentence you can say in the presentation as it is.
   ]
@@ -46,6 +48,87 @@
 
 #pagebreak()
 #outline(depth: 2, indent: 1em)
+
+// =====================================================================
+= Tuesday 3 November: the briefing <ch-brief>
+
+Tuesday is not the final presentation. Ma'am wants each student to *explain the topic*: what you are building, the basics behind it, and how far you are. This chapter is that conversation, prepared. The rest of the book is the depth behind every sentence here.
+
+== What you are building, in 2 minutes
+Say these six points in this order. Each one points to the chapter that backs it up if she asks for more.
+
++ *The problem* (@ch-problem). "Colorectal cancer usually starts as a polyp, a small growth in the colon. Doctors find polyps by colonoscopy, but about one adenoma in four is missed. A model that outlines polyps in the camera image can act as a second pair of eyes."
++ *The task* (@ch-basics, @sec-tasks). "This is *semantic segmentation*: the network gives a label to *every pixel*, polyp or background. It is not classification. From the mask I also draw a box around each polyp, which gives the *detection* view the brief asks for."
++ *The paper* (@ch-paper). "I am implementing *FANet: A Feedback Attention Network for Improved Biomedical Image Segmentation*, by Tomar et al., published in *IEEE Transactions on Neural Networks and Learning Systems* in 2023. It is a CNN, within five years, and more advanced than a plain U-Net."
++ *The idea of FANet* (@ch-arch). "A normal network forgets its earlier prediction for an image. FANet keeps the mask it predicted for every training image in a *memory* and feeds it back in as a second input. Inside every block, a *MixPool* layer uses that mask as *hard attention*: one half of the features only looks where the mask says, the other half sees everything, so a wrong mask cannot ruin the result. At test time it *refines* its own mask over several rounds."
++ *Data and implementation* (@ch-impl). "I use the paper's dataset, *Kvasir-SEG*: 1000 colonoscopy images with masks drawn by doctors, split 880 for training and 120 for testing as in the paper. Everything is written from scratch in PyTorch: the model, the memory, the loss, the metrics and the training loop. No pretrained weights."
++ *Where I am* (@ch-results, @ch-roboflow). "It is trained. With the paper's test protocol I get a Dice score of 0.842 against the paper's 0.880, and 0.900 when the refinement starts from an empty mask. For my own dataset I am using Roboflow: real photos of diseased leaves, labelled by hand, to show the model transfers to a new domain."
+
+#say[I am implementing FANet, an IEEE TNNLS 2023 paper, from scratch for polyp segmentation in colonoscopy images. The network remembers its previous mask for each image and uses it as attention, and at test time it refines its own mask. On Kvasir-SEG I reach 0.842 Dice with the paper's protocol against their 0.880. For my own dataset I am labelling leaf-disease photos in Roboflow and fine-tuning the model on them.]
+
+== The words you must be able to define on the spot
+#table(columns: (auto, 1fr), stroke: 0.4pt, inset: 5pt,
+  [*CNN*], [a neural network built from convolution layers: small filters slid over the image that detect local patterns (edges, textures, shapes)],
+  [*Segmentation*], [a class for every pixel; the output is a mask the size of the image],
+  [*Detection*], [a box (and class) around each object],
+  [*Encoder–decoder / U-Net*], [encoder shrinks the image and learns _what_ is there; decoder grows it back and learns _where_; skip connections carry fine detail across],
+  [*Attention*], [weighting features by importance; *hard* attention multiplies by a 0/1 mask],
+  [*Feedback / memory*], [FANet's stored previous mask for each image, fed back as input],
+  [*Dice*], [overlap between predicted and true mask, $2"TP" / (2"TP" + "FP" + "FN")$; 1 = perfect],
+  [*IoU*], [intersection over union, $"TP" / ("TP" + "FP" + "FN")$; stricter than Dice],
+  [*Otsu*], [a classical (non-learned) threshold, used for FANet's very first mask],
+  [*Transfer learning / fine-tuning*], [start from weights trained on one dataset, continue training on another],
+  [*Roboflow*], [a web tool to upload images, label them, split, augment and export a dataset],
+)
+
+== What is done, what is left (status on 2 Nov)
+#table(columns: (1fr, auto, 1.3fr), stroke: 0.4pt, inset: 5pt,
+  [*Part*], [*Status*], [*Evidence*],
+  [Topic registered (FANet, Kvasir-SEG)], [done, 13 Oct], [row 29 of the topic sheet],
+  [Model, memory, data, loss, metrics, training, evaluation written from scratch], [done], [`src/`; `python -m src.model` prints 7,720,266 parameters],
+  [Trained and tested on Kvasir-SEG], [done], [Dice 0.842 (paper protocol), 0.900 (empty start); `runs/kvasir_official`],
+  [Detection view (boxes from masks)], [done], [box precision 0.685, box recall 0.800 (paper protocol); 0.836 / 0.896 from an empty start],
+  [Experiments beyond the paper], [done], [no-feedback ablation 0.883; 512×512 run 0.831; memory probe; untrained fmask finding],
+  [Audit (everything re-run, numbers match)], [done, 31 Oct], [@ch-audit],
+  [Leaf transfer baselines on 470 LDSD photos], [done], [Dice 0.681 fine-tuned, 0.678 from scratch, 0.004 zero-shot],
+  [Roboflow: account, project `leaf-disease-spots`, 30 photos uploaded], [done], [app.roboflow.com/chaitanyadl/leaf-disease-spots],
+  [Roboflow: hand labels, version with augmentation, export], [*in progress*], [steps in @ch-roboflow],
+  [Fine-tune on the Roboflow set, add to results, deck and notebook], [*next*], [commands in @ch-roboflow],
+  [PPT (14 slides)], [draft done], [gets Roboflow slides after the export],
+  [Submission notebook with outputs], [done, re-run after Roboflow], [`notebooks/FANet_project.ipynb`],
+)
+
+#say[The core reproduction is complete and audited: model, training, evaluation, an ablation and a higher-resolution run. What is left is the own-dataset part: I have uploaded 30 leaf photos to Roboflow and am labelling them by hand; then I will generate an augmented version, export it, fine-tune my model on it and add the result to the slides and the notebook.]
+
+== What more I will do, in order
++ *Finish the Roboflow dataset:* hand-label all 30 photos (polygon / Smart Polygon, class "disease"), split 80/20, generate a version with flips, 90° rotations, ±15° rotation and brightness, export as segmentation masks. Take screenshots of each step for the slides.
++ *Train on it:* convert the export (`src.roboflow_to_masks`), fine-tune the polyp model on the 24 training photos, test on the 118 held-out LDSD photos. Compare with training from random weights: with only 24 photos, transfer should help more than it did with 470.
++ *Measure my own labels:* Dice between my hand masks and LDSD's masks for the same 30 photos (how consistent is manual labelling?).
++ *Update the deliverables:* the "pending" row in @sec-leaf-results, two Roboflow slides in the deck, and a re-run of the notebook.
++ *Optional extension, if time allows:* fix the fmask head that never learns (@sec-findings) with a straight-through estimator or soft gating, and see whether the feedback then adds more.
+
+== Questions to ask ma'am
+Ask the ones whose answer changes what you do. For each, the note says what you assume until she answers.
+
++ *"Is a segmentation paper with a detection view acceptable for 'segmentation and detection'?"* The brief says segmentation _and_ detection. FANet segments; I derive boxes from the masks and report box precision and recall. _Assumption:_ yes. If she wants a real detector, ask whether reporting box metrics is enough.
++ *"For the own dataset in Roboflow, are real public photos that I label myself acceptable, or must I photograph the images myself?"* Polyp images cannot be collected by a student, so I changed the domain to leaf disease spots: same task, different domain. The 30 photos come from a public-domain (CC0) leaf set; the *labels are mine*. _Assumption:_ acceptable, since she said "if not suitable, take a separate dataset and augment it in Roboflow".
++ *"How many images should the Roboflow dataset have, and must the model be trained on it, or is building and augmenting it enough?"* _Assumption:_ 30 photos, about 72 after 3× augmentation, and I will fine-tune on it anyway.
++ *"How should the Roboflow dataset be submitted: a link to the project, an exported zip, or screenshots in the PPT?"*
++ *"Should the notebook train the model end to end, or may it load my trained weights and show evaluation and results?"* Full training takes about an hour on a GPU. _Assumption:_ it loads weights and runs evaluation, with training code included.
++ *"My result is 0.842 against the paper's 0.880. Is an explained gap acceptable, or should I try to match the paper's number?"* I have ruled out resolution and have an ablation that explains part of it.
++ *"For the final presentation: what date, how many minutes, and is a live demo expected? And does the 20-mark quiz cover DL theory from the syllabus or the project?"*
+
+#warn[Ask questions 2 and 5 at least: they decide the remaining work. If she says the own photos must be taken by you, the plan is simple: photograph diseased leaves around campus or at home with your phone, upload them to the same Roboflow project and label them the same way.]
+
+== If she asks something you are not sure about
+Say what you know, and point to where the answer lives: "That is in my MixPool block; the previous mask is max-pooled to the feature size and OR-ed with the fmask." Never invent a number: "I have that in my results table; I will show it in the final presentation."
+
+#check(
+  [Give the 2-minute explanation out loud without looking, in six points.],
+  [Define segmentation, detection, Dice, and hard attention in one sentence each.],
+  [What is finished and what is left? Name the next three steps.],
+  [Which two questions to ma'am decide your remaining work?],
+)
 
 // =====================================================================
 = The project on one page <ch-onepage>
@@ -71,9 +154,9 @@
 
 *What I found.* I reproduced the method to within 0.04 Dice. My experiments show the feedback memory helps less than the paper claims, and that part of the paper's attention block never learns (§#link(<sec-findings>)[8.4]).
 
-*Own dataset.* Real photos of diseased leaves, labelled by hand in *Roboflow* and augmented there (flips, rotations); the polyp model is fine-tuned on them. Same task (find irregular blobs on a textured surface), different domain.
+*Own dataset.* Real photos of diseased leaves, labelled by hand in *Roboflow* and augmented there (flips, rotations); the polyp model is then fine-tuned on them. (Status on 2 Nov: 30 photos uploaded, labelling in progress; @ch-brief.) Same task (find irregular blobs on a textured surface), different domain.
 
-#say[My project implements FANet, an IEEE TNNLS 2023 paper, from scratch for polyp segmentation in colonoscopy images. Its idea is to feed the network's own previous prediction back in as attention, and to refine the mask over several rounds at test time. On the paper's dataset, Kvasir-SEG, I get a Dice of 0.842 with the paper's protocol, against 0.880 in the paper, and 0.900 with a better starting mask. I also built my own leaf-disease dataset in Roboflow and transferred the model to it.]
+#say[My project implements FANet, an IEEE TNNLS 2023 paper, from scratch for polyp segmentation in colonoscopy images. Its idea is to feed the network's own previous prediction back in as attention, and to refine the mask over several rounds at test time. On the paper's dataset, Kvasir-SEG, I get a Dice of 0.842 with the paper's protocol, against 0.880 in the paper, and 0.900 with a better starting mask. For my own dataset I am labelling leaf-disease photos in Roboflow by hand, to fine-tune the model on a new domain.]
 
 // =====================================================================
 = The problem we are solving <ch-problem>
@@ -118,6 +201,39 @@ A mask says *where* the polyp is, *how big* it is and *where its edges are*: wha
 = Deep-learning basics you need <ch-basics>
 
 This chapter is the theory behind every line of the code. Skip what you already know.
+
+== From a neuron to a deep network
+- A *neuron* takes numbers $x_1, dots, x_n$, multiplies each by a *weight*, adds a *bias* and passes the sum through a non-linear function: $y = f(w_1 x_1 + dots + w_n x_n + b)$. The weights are what the network learns.
+- A *layer* is many neurons side by side; a *deep* network stacks many layers, so later layers combine the patterns found by earlier ones.
+- *Machine learning vs deep learning.* Classical methods (like Otsu, @ch-arch) use rules or features a person designed. Deep learning learns the features themselves from labelled examples: nobody tells FANet what a polyp edge looks like.
+- *Supervised learning:* every training image comes with the right answer (here the doctor-drawn mask). The network's prediction is compared with it by a loss, and the weights are adjusted to lower the loss.
+
+== Why a CNN for images
+A fully connected layer on a 256×256 colour image would need $256 dot 256 dot 3 approx 196{,}000$ weights *per neuron*, and would treat a polyp in the top-left corner as unrelated to the same polyp in the centre. A *convolutional* neural network (CNN) fixes both problems:
+- *Local connections:* each output looks at a small 3×3 neighbourhood, because nearby pixels belong together.
+- *Weight sharing:* the same small filter is used at every position, so it has only $3 dot 3 dot C_"in"$ weights and finds its pattern anywhere.
+- *A hierarchy of features:* early layers respond to edges and colours, middle layers to textures and blob shapes, deep layers to whole object parts. Pooling between them lets each deeper layer see a larger area.
+
+That is why every segmentation and detection model in the brief's sense is a CNN (or, more recently, a transformer). FANet is a CNN from input to output.
+
+== Four kinds of vision task <sec-tasks>
+#table(columns: (auto, 1fr, auto), stroke: 0.4pt, inset: 5pt,
+  [*Task*], [*Output*], [*Typical models*],
+  [Classification], [one label for the whole image], [ResNet, VGG],
+  [Object detection], [a box + class + confidence for every object], [YOLO, Faster R-CNN, SSD],
+  [Semantic segmentation], [a class for every pixel; objects of the same class are not separated], [U-Net, DeepLab, *FANet*],
+  [Instance segmentation], [a separate mask for every object], [Mask R-CNN, CondInst],
+)
+FANet does *binary semantic segmentation*: two classes, polyp and background. Kvasir images usually contain one polyp, so semantic and instance segmentation almost coincide here.
+
+== Detection basics, and how this project covers them
+- A *bounding box* is $(x_"min", y_"min", x_"max", y_"max")$. A detector is scored by matching each predicted box to a true box when their *box IoU* (area of overlap ÷ area of union) is at least 0.5.
+- *Box precision* = matched predicted boxes ÷ all predicted boxes; *box recall* = matched true boxes ÷ all true boxes. (Detection papers also report mAP, the precision averaged over recall levels and classes; with one class and no confidence ranking we report precision and recall.)
+- *Our detection view:* `src/metrics.py` finds each connected blob in the predicted mask (breadth-first search over neighbouring pixels), draws its bounding box, and matches it to the boxes of the true mask. A mask always contains the box, but a box never contains the mask: segmentation gives strictly more information.
+- Result on the 120 test images (@ch-results): box precision 0.685 and recall 0.800 under the paper's protocol; 0.836 and 0.896 from an empty start. Precision is lower than recall: the model finds most polyps but sometimes predicts an extra blob that matches no polyp.
+
+== Transfer learning
+A network trained on one dataset has already learnt general features (edges, textures, blob shapes). *Fine-tuning* starts a new task from those weights instead of from random numbers, usually with a smaller learning rate. It helps most when the new dataset is small. We use it twice: polyp → synthetic leaves, and polyp → real leaf photos (@ch-roboflow).
 
 == An image is a tensor
 A colour image of height $H$ and width $W$ is a 3-D array of numbers: *3 × H × W* (red, green, blue channels), each value in $[0, 1]$ after dividing by 255. A batch of $B$ images is a 4-D tensor *B × 3 × H × W*. Our masks are *B × 1 × H × W* with values 0 or 1.
