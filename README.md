@@ -15,7 +15,7 @@ DOI [10.1109/TNNLS.2022.3159394](https://doi.org/10.1109/TNNLS.2022.3159394) ·
 
 **PPT title:** *Polyp Segmentation for Colorectal Cancer Screening using FANet (Feedback Attention), with Transfer to Plant Disease Spotting.*
 
-**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. No-feedback ablation 0.883: the feedback adds little in our reproduction (§10). 512×512 run (20 Oct): 0.831, so resolution does not explain the gap. **31 Oct:** audit passed (numbers reproduce exactly); mask-loading bug for class-index masks fixed; own dataset moved to **Roboflow** (faculty requirement, 30 Oct), using real leaf photos from LDSD (§9.0). Pending: your Roboflow labels. **2 Nov:** project book ch. 1 = the Tuesday briefing (what to say, status, next steps, questions for ma'am); Roboflow project created and 30 photos uploaded.
+**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. No-feedback ablation 0.883: the feedback adds little in our reproduction (§10). 512×512 run (20 Oct): 0.831, so resolution does not explain the gap. **31 Oct:** audit passed (numbers reproduce exactly); mask-loading bug for class-index masks fixed; own dataset moved to **Roboflow** (faculty requirement, 30 Oct), using real leaf photos from LDSD (§9.0). **2 Nov:** project book ch. 1 = the Tuesday briefing (what to say, status, next steps, questions for ma'am); Roboflow project created and 30 photos uploaded. **7 Nov:** Roboflow dataset finished (30 photos labelled by hand, version v1 with 126 images, public on Roboflow Universe); labels agree with LDSD's masks at Dice 0.730; FANet fine-tuned on it scores 0.472 on the 118 LDSD test photos (0.434 from random weights). Deck, notebook and book updated; first version sent to ma'am for review.
 
 **Project book (read this first):** [`docs/project_book.pdf`](docs/project_book.pdf): the whole project from the basics, with a Tuesday presentation chapter. **Submission notebook:** [`notebooks/FANet_project.ipynb`](notebooks/FANet_project.ipynb). **Weekend study guide:** [`docs/study_guide.pdf`](docs/study_guide.pdf) (four sessions with quizzes and hands-on tasks). **Deck:** [`presentation/FANet_ChaitanyaShinde_231070066.pptx`](presentation/FANet_ChaitanyaShinde_231070066.pptx).
 
@@ -64,8 +64,9 @@ The faculty brief (photo: [`brief/finalProjectDeepLearning.jpeg`](brief/finalPro
 | "Fairly advanced" | Yes | Not a plain U-Net: a cross-epoch mask memory, hard-attention MixPool blocks, test-time iterative refinement |
 | From scratch | Yes | Every layer written with `nn.Conv2d`, `nn.BatchNorm2d` etc. No model zoo, no pretrained weights, no `segmentation_models_pytorch`. The authors' code was only read to check details |
 | Paper's dataset | Yes | Kvasir-SEG, same loss, same 880/120 split. Input 256×256 as in the official code (the paper reports 512×512; `--size 512` reproduces that) |
-| Own small dataset, explained | Yes | Procedural synthetic leaf-spot generator (exact masks, logged parameters) and/or 40–60 phone photos annotated in Labelme (§9) |
-| PPT | Planned | Outline in §11 |
+| Own small dataset, explained | Yes | **Roboflow** (faculty requirement, 30 Oct): 30 real leaf photos labelled by hand, split, augmented 5× and exported as masks (§9.0). Earlier: a script-generated synthetic set (§9.1) |
+| PPT | Yes | `presentation/FANet_ChaitanyaShinde_231070066.pptx`, generated from the result CSVs (§11) |
+| Notebook | Yes | `notebooks/FANet_project.ipynb`, executed with outputs |
 
 **What "from scratch" means here:** the model, data loader, augmentation, loss, training loop, metrics and evaluation are written by me in PyTorch. Using `torchvision.models` or the authors' repository as-is would not count.
 
@@ -466,7 +467,8 @@ python -m src.evaluate --ckpt runs/kvasir/best.pt --images some_folder/
 
 - **Photos:** LDSD, *Leaf disease segmentation dataset* (Kaggle `fakhrealam9537/leaf-disease-segmentation-dataset`, CC0; 588 real photos from PlantDoc with disease masks). Downloaded to `data/LDSD/` (not committed), split 470 / 118 with `python -m src.split --data data/LDSD/data/data --test 0.2`. The 118 test photos are the leaf test set.
 - **Manual labels:** 30 photos from the 470 training pool (seeded pick: at least 300 px, disease covering 3–50%; list in `dataset/custom/roboflow_upload_list.txt`, files in `data/roboflow_upload/`) are uploaded to Roboflow **without masks** and the disease spots are outlined by hand. LDSD's own masks for those 30 then measure how good the hand labels are.
-- **Roboflow steps:** Semantic Segmentation project, class `disease` → upload → label with Polygon / Smart Polygon → split 80/20/0 → version: Auto-Orient, Resize stretch 256×256; Flip (h+v), 90° Rotate, Rotation ±15°, Brightness ±15%; 3× → export *Semantic Segmentation Masks* (or *COCO Segmentation* for an Instance Segmentation project). Full walkthrough: `docs/project_book.pdf`, chapter 10.
+- **Roboflow project (done 7 Nov):** workspace `chaitanyadl`, Semantic Segmentation project `leaf-disease-seg`, public at [universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne](https://universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne). All 30 photos labelled by hand (Smart Polygon + Polygon, about 2 hours). Version v1: split 24 / 6 / 0, Auto-Orient, Resize stretch 256×256; Flip (h+v), 90° Rotate (cw, ccw, upside down), Rotation ±15°, Brightness ±15%; 5× on train → 120 train + 6 valid = 126 images. Exported as *Semantic Segmentation Masks*; the zip is in `data/roboflow_export/` (not committed), screenshots of every step in `presentation/assets/roboflow/`. Full walkthrough: `docs/project_book.pdf`, chapter "Our own dataset, built in Roboflow".
+- **Why public photos:** taking our own photos of diseased leaves was not possible, so the photos come from LDSD (CC0). The labels are drawn by hand; LDSD's own masks for the same 30 photos are used only to score the hand labels.
 - **Convert, fine-tune, test:**
   ```bash
   python -m src.roboflow_to_masks --src <unzipped export> --out dataset/custom/roboflow_leaf --compare data/LDSD/data/data
@@ -561,11 +563,14 @@ The aligned 512 run shows the memory-copying failure again at the paper's resolu
 | Kvasir model, no fine-tuning | 0.010 (round 1: 0.129) | 0.004 |
 | Fine-tuned from the Kvasir weights on 470 LDSD photos, 60 epochs, lr 5e-5 | 0.670 | 0.681 |
 | From random weights on the same 470 photos, 60 epochs, lr 1e-4 | 0.679 | 0.667 |
-| Fine-tuned on my 30 Roboflow-labelled photos | pending | pending |
+| Fine-tuned from the Kvasir weights on my Roboflow photos (24 train + 6 valid, 5× augmented), 60 epochs, lr 5e-5 | **0.472** | **0.465** |
+| From random weights on the same Roboflow photos, 60 epochs, lr 1e-4 | 0.434 | 0.419 |
 
-Real leaves are much harder than polyps (many small scattered spots, cluttered backgrounds, coarse reference masks). With 470 photos, starting from the polyp weights hardly helps (0.681 vs 0.679); transfer should matter more with the 30-photo Roboflow set.
+Real leaves are much harder than polyps (many small scattered spots, cluttered backgrounds, coarse reference masks). With 470 photos, starting from the polyp weights hardly helps (0.681 vs 0.679).
 
-The synthetic leaves are much easier than real photos (clean shapes, plain backgrounds); real Labelme-annotated photos are the next step (§9.2).
+**My Roboflow dataset (7 Nov).** My hand labels agree with LDSD's masks on the same 30 photos at **Dice 0.730** (median 0.781; `dataset/custom/roboflow_leaf/agreement.csv`). Most of the gap is a difference in definition, not sloppiness: on leaf_00278 LDSD marks the whole yellowed leaf where I marked the spots (Dice 0.09), and on leaf_00076 I marked more of the speckled area than LDSD did. Trained on only **24** of my photos (120 with Roboflow's 5× copies), FANet reaches **0.472** on the 118 LDSD test photos, against 0.68 with 470 photos: twenty times less data costs about 0.2 Dice. Here **transfer does help**: from the polyp weights 0.472 / 0.465, from random weights 0.434 / 0.419 (+0.04), while with 470 photos it made no difference. Two caveats: the test masks are LDSD's, so a model trained on my labels is also penalised for the definition differences above (the labels themselves only agree at 0.73); and the fine-tuned model picked its checkpoint at epoch 7 on just 6 validation photos, so the numbers are noisy.
+
+The synthetic leaves are much easier than real photos (clean shapes, plain backgrounds), which is why the Roboflow set uses real photos.
 
 ---
 

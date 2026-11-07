@@ -34,7 +34,7 @@
   Chaitanya Shinde · 231070066 \
   B.Tech Computer Engineering, Sem VII · Deep Learning mini-project, 2026–27
   #v(0.5cm)
-  Written 31 Oct 2026 · updated 2 Nov 2026 with the Tuesday briefing (@ch-brief) · repo `DLproject`
+  Written 31 Oct 2026 · updated 2 Nov (Tuesday briefing, @ch-brief) and 7 Nov (Roboflow dataset and results, @ch-roboflow) · repo `DLproject`
   #v(2cm)
   #block(width: 85%, inset: 10pt, stroke: 0.6pt + accent, radius: 3pt)[
     #set align(left)
@@ -94,7 +94,7 @@ Say these six points in this order. Each one points to the chapter that backs it
   [*Roboflow*], [a web tool to upload images, label them, split, augment and export a dataset],
 )
 
-== What is done, what is left (status on 2 Nov)
+== What is done (status on 7 Nov)
 #table(columns: (1fr, auto, 1.3fr), stroke: 0.4pt, inset: 5pt,
   [*Part*], [*Status*], [*Evidence*],
   [Topic registered (FANet, Kvasir-SEG)], [done, 13 Oct], [row 29 of the topic sheet],
@@ -104,11 +104,12 @@ Say these six points in this order. Each one points to the chapter that backs it
   [Experiments beyond the paper], [done], [no-feedback ablation 0.883; 512×512 run 0.831; memory probe; untrained fmask finding],
   [Audit (everything re-run, numbers match)], [done, 31 Oct], [@ch-audit],
   [Leaf transfer baselines on 470 LDSD photos], [done], [Dice 0.681 fine-tuned, 0.678 from scratch, 0.004 zero-shot],
-  [Roboflow: account, project `leaf-disease-spots`, 30 photos uploaded], [done], [app.roboflow.com/chaitanyadl/leaf-disease-spots],
-  [Roboflow: hand labels, version with augmentation, export], [*in progress*], [steps in @ch-roboflow],
-  [Fine-tune on the Roboflow set, add to results, deck and notebook], [*next*], [commands in @ch-roboflow],
-  [PPT (14 slides)], [draft done], [gets Roboflow slides after the export],
-  [Submission notebook with outputs], [done, re-run after Roboflow], [`notebooks/FANet_project.ipynb`],
+  [Roboflow: project `leaf-disease-seg`, 30 photos labelled by hand, version v1 (126 images), export], [done, 7 Nov], [universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne; @ch-roboflow],
+  [Hand labels checked against LDSD's masks], [done, 7 Nov], [mean Dice 0.730 over 30 photos],
+  [Fine-tuned on the Roboflow set, tested on 118 LDSD photos], [done, 7 Nov], [0.472 from polyp weights, 0.434 from random weights (@sec-leaf-results)],
+  [PPT (16 slides, three on Roboflow)], [done, 7 Nov], [`presentation/FANet_ChaitanyaShinde_231070066.pptx`],
+  [Submission notebook with outputs], [done, re-run 7 Nov], [`notebooks/FANet_project.ipynb`],
+  [First version sent to ma'am for review], [7 Nov], [package `FANet_ChaitanyaShinde_231070066.zip`],
 )
 
 #say[The core reproduction is complete and audited: model, training, evaluation, an ablation and a higher-resolution run. What is left is the own-dataset part: I have uploaded 30 leaf photos to Roboflow and am labelling them by hand; then I will generate an augmented version, export it, fine-tune my model on it and add the result to the slides and the notebook.]
@@ -167,7 +168,7 @@ Say what you know, and point to where the answer lives: "That is in my MixPool b
 
 *What I found.* I reproduced the method to within 0.04 Dice. My experiments show the feedback memory helps less than the paper claims, and that part of the paper's attention block never learns (§#link(<sec-findings>)[8.4]).
 
-*Own dataset.* Real photos of diseased leaves, labelled by hand in *Roboflow* and augmented there (flips, rotations); the polyp model is then fine-tuned on them. (Status on 2 Nov: 30 photos uploaded, labelling in progress; @ch-brief.) Same task (find irregular blobs on a textured surface), different domain.
+*Own dataset.* Real photos of diseased leaves, labelled by hand in *Roboflow* and augmented there (flips, rotations); the polyp model is then fine-tuned on them. (Done on 7 Nov: 30 photos labelled, 126-image version, fine-tuned FANet scores 0.472 on 118 test photos; @sec-leaf-results.) Same task (find irregular blobs on a textured surface), different domain.
 
 #say[My project implements FANet, an IEEE TNNLS 2023 paper, from scratch for polyp segmentation in colonoscopy images. Its idea is to feed the network's own previous prediction back in as attention, and to refine the mask over several rounds at test time. On the paper's dataset, Kvasir-SEG, I get a Dice of 0.842 with the paper's protocol, against 0.880 in the paper, and 0.900 with a better starting mask. For my own dataset I am labelling leaf-disease photos in Roboflow by hand, to fine-tune the model on a new domain.]
 
@@ -693,14 +694,14 @@ How we use it:
 #warn[On the free plan, Roboflow projects are *public* (they appear on Roboflow Universe). That is fine here: the LDSD photos are CC0. Do not upload personal photos you do not want public.]
 
 + *Account:* app.roboflow.com → sign up (Google login works) → create a workspace (any name, e.g. "chaitanya-dl").
-+ *New project:* "Create New Project" → project type *Semantic Segmentation* (if not offered, choose *Instance Segmentation*; the converter handles both) → name "leaf-disease-spots" → class (annotation group) "disease".
++ *New project:* "Create New Project" → project type *Semantic Segmentation* → name "leaf-disease-seg" → one class. (What actually happened: the first project, "leaf-disease-spots", had been created as *Object Detection*, which stores only boxes, and its upload was never saved. It was replaced by a Semantic Segmentation project on 7 Nov. The class ended up named after the project instead of "disease"; the name does not matter, since every labelled pixel counts as disease.)
 + *Upload:* drag the whole folder `data/roboflow_upload/` (30 photos) into the upload page → "Save and Continue".
-+ *Annotate yourself:* assign the images to yourself → open each image → choose *Smart Polygon* (AI-assisted, runs SAM in the browser: click on a spot, it proposes an outline, adjust it) or the plain *Polygon* tool (click around the spot) → class "disease" → one polygon per spot or patch. Label every visible diseased area, not the healthy leaf. Note the time you spend (expect 1–2 minutes per photo): it goes on the slide.
++ *Annotate yourself:* assign the images to yourself → open each image → choose *Smart Polygon* (AI-assisted, SAM-based: click on a spot, it proposes an outline, adjust it) or the plain *Polygon* tool (click around the spot) → one polygon per spot or patch. *Labelling rule* (the same one LDSD uses): brown or dead tissue on every leaf in the photo; standalone yellow blotches count; a thin yellow rim around a brown spot does not; one shape around a dense cluster of tiny dots. All 30 photos took about 2 hours on 7 Nov.
 + *Add to dataset:* "Add images to Dataset" → split *train 80% / valid 20% / test 0%* (24 / 6 photos). Our real test set is the 118 LDSD images.
 + *Generate a version:* Versions → "Create New Version".
   - Preprocessing: *Auto-Orient* on; *Resize → Stretch to 256×256* (our training size).
   - Augmentation (applied to the *training* images only): *Flip* (horizontal + vertical), *90° Rotate* (clockwise, counter-clockwise, upside down), *Rotation* ±15°, *Brightness* ±15%.
-  - Maximum version size: the largest your plan allows (e.g. *3×*: every training photo plus 2 augmented copies, so about 72 training images).
+  - Maximum version size: *5×*, the most the free plan allows: 24 training photos × 5 = *120* training images, plus the 6 un-augmented validation photos = *126* in version v1.
   - "Create".
 + *Screenshots for the PPT:* the annotation screen with a polygon, the dataset page, the version page listing preprocessing and augmentation, and the Health Check page (class balance, image sizes).
 + *Export:* on the version → "Download Dataset" → format *Semantic Segmentation Masks* (for an Instance Segmentation project: *COCO Segmentation*) → "Download zip to computer". Unzip it.
@@ -716,7 +717,12 @@ python -m src.evaluate --ckpt runs/roboflow_leaf/best.pt --data data/LDSD/data/d
 
 *What the converter does.* Roboflow's semantic export stores, per split folder, `NAME.jpg` and `NAME_mask.png`, where each mask pixel is a *class number* (0 = background, 1 = disease), not 0/255. The converter turns every non-zero class into foreground, writes our `images/` + `masks/` layout, and turns Roboflow's train/valid folders into `train.txt` / `val.txt`. With a valid split, `train.py` picks its checkpoint on Roboflow's valid images, *never on the test images*: cleaner than the paper's protocol.
 
-#say[I built my own dataset in Roboflow: I uploaded 30 real photos of diseased leaves, outlined the disease spots by hand with Roboflow's polygon tools, split them 80/20, and generated a version with flips, 90° rotations, small rotations and brightness changes, which tripled the training images. I exported it as segmentation masks and fine-tuned my polyp model on it.]
+#say[I built my own dataset in Roboflow. Taking my own photos of diseased leaves was not possible, so I took 30 real photos from a public leaf-disease set and outlined every disease spot by hand with Roboflow's polygon tools. I split them 24 / 6, resized them to 256 by 256, and generated a version with flips, 90-degree turns, small rotations and brightness changes, five copies per training photo, 126 images in all. I exported it as segmentation masks and fine-tuned my polyp model on it.]
+
+The dataset is public on Roboflow Universe: #link("https://universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne")[universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne]. The exported zip is in `data/roboflow_export/` and screenshots of every step are in `presentation/assets/roboflow/`.
+
+#fig("../presentation/assets/roboflow_grid.png", [All 30 photos in the Roboflow project with my polygon labels (Roboflow's dataset page).])
+#fig("../presentation/assets/roboflow_version.png", [Version v1 in Roboflow: 120 training images (24 photos × 5), 6 validation photos, 256×256, and the five augmentations.])
 
 == Leaf results <sec-leaf-results>
 All on the 118 LDSD test photos, scored against LDSD's masks, 256×256.
@@ -726,9 +732,16 @@ All on the 118 LDSD test photos, scored against LDSD's masks, 256×256.
   [Polyp model, no fine-tuning], [0.010 (round 1: 0.129)], [0.004],
   [Fine-tuned from the polyp weights on 470 LDSD photos (their masks)], [*0.670*], [*0.681*],
   [Trained from random weights on the same 470 photos], [0.678], [0.667],
-  [*Fine-tuned on my 30 Roboflow-labelled photos*], [pending], [pending],
+  [*Fine-tuned from the polyp weights on my Roboflow photos* (24 train, 5× augmented)], [*0.472*], [*0.465*],
+  [*From random weights on the same Roboflow photos*], [0.434], [0.419],
 )
-Scores after 10 refinement rounds. *Reading.* Without fine-tuning the polyp model is useless on leaves (Dice 0.13 after one round), and refinement makes it worse: its masks shrink to almost nothing (0.010 after 10 rounds). That is a *domain gap*: it learned what a polyp looks like, not what a disease spot looks like. Fine-tuning on leaf photos lifts it to *0.67–0.68*. Leaves are harder than polyps: many small scattered spots instead of one blob, cluttered real-world backgrounds, and coarse reference masks. *Does the polyp training help?* Hardly: from random weights the same 470 photos give 0.678 against 0.681 fine-tuned. With 470 photos the leaf task is learnable on its own; transfer should matter more with few images, which the 30-photo Roboflow set will test.
+Scores after 10 refinement rounds. *Reading.* Without fine-tuning the polyp model is useless on leaves (Dice 0.13 after one round), and refinement makes it worse: its masks shrink to almost nothing (0.010 after 10 rounds). That is a *domain gap*: it learned what a polyp looks like, not what a disease spot looks like. Fine-tuning on leaf photos lifts it to *0.67–0.68*. Leaves are harder than polyps: many small scattered spots instead of one blob, cluttered real-world backgrounds, and coarse reference masks. *Does the polyp training help?* Hardly: from random weights the same 470 photos give 0.678 against 0.681 fine-tuned. With 470 photos the leaf task is learnable on its own.
+
+*My Roboflow set.* With only 24 training photos, transfer *does* help: 0.472 from the polyp weights against 0.434 from random weights (+0.04). The price of twenty times less data is about 0.2 Dice (0.47 against 0.68). One more reason the score is lower: the test masks are LDSD's, and my labels agree with LDSD's only at Dice 0.730 on the same 30 photos (below), so the model learns my definition of a spot and is scored against theirs.
+
+#fig("../presentation/assets/roboflow_agreement.png", [My label (pink) against LDSD's (blue). Top, leaf_00260: Dice 0.96. Bottom, leaf_00278: Dice 0.09, because LDSD marks the whole yellowed leaf as diseased and I marked only the spots. A difference in definition, not a careless label.], w: 75%)
+
+#key[Labels vs reference: mean Dice *0.730* over 30 photos (median 0.781). Roboflow-trained FANet on 118 test photos: *0.472* from polyp weights, *0.434* from random weights. With little data, transfer learning helps.]
 
 == The first own dataset: synthetic leaves <sec-synthetic>
 Before Roboflow, we generated 60 leaf images by script (`src/make_synthetic.py`): a green ellipse leaf with veins, 1–4 irregular brown spots with a yellow halo, blur, lighting gradient and noise. The masks are exact because we drew the spots. The polyp model scored Dice 0.474 on them before fine-tuning and 0.984 after. Too easy (clean shapes, plain backgrounds), which is why the real photos matter.
