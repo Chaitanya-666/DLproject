@@ -106,7 +106,7 @@ Say these six points in this order. Each one points to the chapter that backs it
   [Leaf transfer baselines on 470 LDSD photos], [done], [Dice 0.681 fine-tuned, 0.678 from scratch, 0.004 zero-shot],
   [Roboflow: project `leaf-disease-seg`, 30 photos labelled by hand, version v1 (126 images), export], [done, 7 Nov], [universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne; @ch-roboflow],
   [Hand labels checked against LDSD's masks], [done, 7 Nov], [mean Dice 0.730 over 30 photos],
-  [Fine-tuned on the Roboflow set, tested on 118 LDSD photos], [done, 7 Nov], [0.472 from polyp weights, 0.434 from random weights (@sec-leaf-results)],
+  [Fine-tuned on the Roboflow set, tested on 118 LDSD photos], [done, 7 Nov], [0.517 from polyp weights, 0.467 from random weights (@sec-leaf-results)],
   [PPT (17 slides, four on Roboflow)], [done, 7 Nov], [`presentation/FANet_ChaitanyaShinde_231070066.pptx`],
   [Submission notebook with outputs], [done, re-run 7 Nov], [`notebooks/FANet_project.ipynb`],
   [First version sent to ma'am for review], [7 Nov], [package `FANet_ChaitanyaShinde_231070066.zip`],
@@ -168,7 +168,7 @@ Say what you know, and point to where the answer lives: "That is in my MixPool b
 
 *What I found.* I reproduced the method to within 0.04 Dice. My experiments show the feedback memory helps less than the paper claims, and that part of the paper's attention block never learns (§#link(<sec-findings>)[8.4]).
 
-*Own dataset.* Real photos of diseased leaves, labelled by hand in *Roboflow* and augmented there (flips, rotations); the polyp model is then fine-tuned on them. (Done on 7 Nov: 30 photos labelled, 126-image version, fine-tuned FANet scores 0.472 on 118 test photos; @sec-leaf-results.) Same task (find irregular blobs on a textured surface), different domain.
+*Own dataset.* Real photos of diseased leaves, labelled by hand in *Roboflow* and augmented there (flips, rotations); the polyp model is then fine-tuned on them. (Done on 7 Nov: 30 photos labelled, 126-image version, fine-tuned FANet scores 0.517 on 118 test photos; @sec-leaf-results.) Same task (find irregular blobs on a textured surface), different domain.
 
 #say[My project implements FANet, an IEEE TNNLS 2023 paper, from scratch for polyp segmentation in colonoscopy images. Its idea is to feed the network's own previous prediction back in as attention, and to refine the mask over several rounds at test time. On the paper's dataset, Kvasir-SEG, I get a Dice of 0.842 with the paper's protocol, against 0.880 in the paper, and 0.900 with a better starting mask. For my own dataset I am labelling leaf-disease photos in Roboflow by hand, to fine-tune the model on a new domain.]
 
@@ -732,16 +732,17 @@ All on the 118 LDSD test photos, scored against LDSD's masks, 256×256.
   [Polyp model, no fine-tuning], [0.010 (round 1: 0.129)], [0.004],
   [Fine-tuned from the polyp weights on 470 LDSD photos (their masks)], [*0.670*], [*0.681*],
   [Trained from random weights on the same 470 photos], [0.678], [0.667],
-  [*Fine-tuned from the polyp weights on my Roboflow photos* (24 train, 5× augmented)], [*0.472*], [*0.465*],
-  [*From random weights on the same Roboflow photos*], [0.434], [0.419],
+  [*Fine-tuned from the polyp weights on my Roboflow photos* (24 train, 5× augmented, constant lr)], [*0.517*], [*0.520*],
+  [*From random weights on the same Roboflow photos* (constant lr)], [0.467], [0.461],
+  [First Roboflow runs, default lr schedule: fine-tuned / from scratch], [0.472 / 0.434], [0.465 / 0.419],
 )
 Scores after 10 refinement rounds. *Reading.* Without fine-tuning the polyp model is useless on leaves (Dice 0.13 after one round), and refinement makes it worse: its masks shrink to almost nothing (0.010 after 10 rounds). That is a *domain gap*: it learned what a polyp looks like, not what a disease spot looks like. Fine-tuning on leaf photos lifts it to *0.67–0.68*. Leaves are harder than polyps: many small scattered spots instead of one blob, cluttered real-world backgrounds, and coarse reference masks. *Does the polyp training help?* Hardly: from random weights the same 470 photos give 0.678 against 0.681 fine-tuned. With 470 photos the leaf task is learnable on its own.
 
-*My Roboflow set.* With only 24 training photos, transfer *does* help: 0.472 from the polyp weights against 0.434 from random weights (+0.04). The price of twenty times less data is about 0.2 Dice (0.47 against 0.68). One more reason the score is lower: the test masks are LDSD's, and my labels agree with LDSD's only at Dice 0.730 on the same 30 photos (below), so the model learns my definition of a spot and is scored against theirs.
+*My Roboflow set.* With only 24 training photos, transfer *does* help: 0.517 from the polyp weights against 0.467 from random weights (+0.05). The price of twenty times less data is about 0.16 Dice (0.52 against 0.68). *Why two sets of Roboflow numbers:* the first runs cut the learning rate whenever the validation loss stalled, and with only 6 validation photos it stalls by chance, so the rate was almost zero after 30 epochs (best checkpoint: epoch 7). With a constant rate (`--lr-patience 0`, 100 epochs) both models gain about 0.04. I decided before seeing the test scores that the constant-rate runs would be the main result. One more reason the score is lower: the test masks are LDSD's, and my labels agree with LDSD's only at Dice 0.730 on the same 30 photos (below), so the model learns my definition of a spot and is scored against theirs.
 
 #fig("../presentation/assets/roboflow_agreement.png", [My label (pink) against LDSD's (blue). Top, leaf_00260: Dice 0.96. Bottom, leaf_00278: Dice 0.09, because LDSD marks the whole yellowed leaf as diseased and I marked only the spots. A difference in definition, not a careless label.], w: 75%)
 
-#key[Labels vs reference: mean Dice *0.730* over 30 photos (median 0.781). Roboflow-trained FANet on 118 test photos: *0.472* from polyp weights, *0.434* from random weights. With little data, transfer learning helps.]
+#key[Labels vs reference: mean Dice *0.730* over 30 photos (median 0.781). Roboflow-trained FANet on 118 test photos: *0.517* from polyp weights, *0.467* from random weights. With little data, transfer learning helps.]
 
 == The first own dataset: synthetic leaves <sec-synthetic>
 Before Roboflow, we generated 60 leaf images by script (`src/make_synthetic.py`): a green ellipse leaf with veins, 1–4 irregular brown spots with a yellow halo, blur, lighting gradient and noise. The masks are exact because we drew the spots. The polyp model scored Dice 0.474 on them before fine-tuning and 0.984 after. Too easy (clean shapes, plain backgrounds), which is why the real photos matter.

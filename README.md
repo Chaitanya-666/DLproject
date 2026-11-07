@@ -15,7 +15,7 @@ DOI [10.1109/TNNLS.2022.3159394](https://doi.org/10.1109/TNNLS.2022.3159394) ·
 
 **PPT title:** *Polyp Segmentation for Colorectal Cancer Screening using FANet (Feedback Attention), with Transfer to Plant Disease Spotting.*
 
-**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. No-feedback ablation 0.883: the feedback adds little in our reproduction (§10). 512×512 run (20 Oct): 0.831, so resolution does not explain the gap. **31 Oct:** audit passed (numbers reproduce exactly); mask-loading bug for class-index masks fixed; own dataset moved to **Roboflow** (faculty requirement, 30 Oct), using real leaf photos from LDSD (§9.0). **2 Nov:** project book ch. 1 = the Tuesday briefing (what to say, status, next steps, questions for ma'am); Roboflow project created and 30 photos uploaded. **7 Nov:** Roboflow dataset finished (30 photos labelled by hand, version v1 with 126 images, public on Roboflow Universe); labels agree with LDSD's masks at Dice 0.730; FANet fine-tuned on it scores 0.472 on the 118 LDSD test photos (0.434 from random weights). Deck, notebook and book updated; first version sent to ma'am for review.
+**Status (19 Oct 2026):** trained and evaluated. Kvasir-SEG test Dice 0.842 with the paper's protocol (paper 0.880 at 512×512), 0.900 from an empty start (§10). Deck built. No-feedback ablation 0.883: the feedback adds little in our reproduction (§10). 512×512 run (20 Oct): 0.831, so resolution does not explain the gap. **31 Oct:** audit passed (numbers reproduce exactly); mask-loading bug for class-index masks fixed; own dataset moved to **Roboflow** (faculty requirement, 30 Oct), using real leaf photos from LDSD (§9.0). **2 Nov:** project book ch. 1 = the Tuesday briefing (what to say, status, next steps, questions for ma'am); Roboflow project created and 30 photos uploaded. **7 Nov:** Roboflow dataset finished (30 photos labelled by hand, version v1 with 126 images, public on Roboflow Universe); labels agree with LDSD's masks at Dice 0.730; FANet fine-tuned on it scores 0.517 on the 118 LDSD test photos (0.467 from random weights; constant learning rate, see §10). Deck, notebook and book updated; first version sent to ma'am for review.
 
 **Trained weights:** [huggingface.co/Ckorion/fanet-polyp-leaf-from-scratch](https://huggingface.co/Ckorion/fanet-polyp-leaf-from-scratch) (model-only checkpoints + model card). **Formal report:** [`docs/report.pdf`](docs/report.pdf).
 
@@ -474,8 +474,9 @@ python -m src.evaluate --ckpt runs/kvasir/best.pt --images some_folder/
 - **Convert, fine-tune, test:**
   ```bash
   python -m src.roboflow_to_masks --src <unzipped export> --out dataset/custom/roboflow_leaf --compare data/LDSD/data/data
-  python -m src.train --data dataset/custom/roboflow_leaf --out runs/roboflow_leaf --init runs/kvasir_official/best.pt --epochs 60 --lr 5e-5 --amp
-  python -m src.evaluate --ckpt runs/roboflow_leaf/best.pt --data data/LDSD/data/data --split test --iters 10 --out runs/roboflow_leaf_ldsd/eval_test
+  python -m src.train --data dataset/custom/roboflow_leaf --out runs/roboflow_leaf_constlr --init runs/kvasir_official/best.pt --epochs 100 --early-stop 0 --lr-patience 0 --lr 5e-5 --amp
+  python -m src.evaluate --ckpt runs/roboflow_leaf_constlr/best.pt --data data/LDSD/data/data --split test --iters 10 --out runs/roboflow_leaf_constlr_ldsd/eval_test
+  # from scratch: same train command without --init, with --lr 1e-4, out runs/roboflow_leaf_scratch_constlr
   ```
   Roboflow masks hold class indices (0/1), not 0/255; `load_mask` handles both since the 31 Oct fix.
 
@@ -565,12 +566,15 @@ The aligned 512 run shows the memory-copying failure again at the paper's resolu
 | Kvasir model, no fine-tuning | 0.010 (round 1: 0.129) | 0.004 |
 | Fine-tuned from the Kvasir weights on 470 LDSD photos, 60 epochs, lr 5e-5 | 0.670 | 0.681 |
 | From random weights on the same 470 photos, 60 epochs, lr 1e-4 | 0.679 | 0.667 |
-| Fine-tuned from the Kvasir weights on my Roboflow photos (24 train + 6 valid, 5× augmented), 60 epochs, lr 5e-5 | **0.472** | **0.465** |
-| From random weights on the same Roboflow photos, 60 epochs, lr 1e-4 | 0.434 | 0.419 |
+| Fine-tuned from the Kvasir weights on my Roboflow photos (24 train + 6 valid, 5× augmented), 100 epochs, constant lr 5e-5 (`--lr-patience 0`) | **0.517** | **0.520** |
+| From random weights on the same Roboflow photos, 100 epochs, constant lr 1e-4 | 0.467 | 0.461 |
+| First Roboflow runs with the default lr schedule (plateau ×0.1), fine-tuned / from scratch | 0.472 / 0.434 | 0.465 / 0.419 |
 
 Real leaves are much harder than polyps (many small scattered spots, cluttered backgrounds, coarse reference masks). With 470 photos, starting from the polyp weights hardly helps (0.681 vs 0.679).
 
-**My Roboflow dataset (7 Nov).** My hand labels agree with LDSD's masks on the same 30 photos at **Dice 0.730** (median 0.781; `dataset/custom/roboflow_leaf/agreement.csv`). Most of the gap is a difference in definition, not sloppiness: on leaf_00278 LDSD marks the whole yellowed leaf where I marked the spots (Dice 0.09), and on leaf_00076 I marked more of the speckled area than LDSD did. Trained on only **24** of my photos (120 with Roboflow's 5× copies), FANet reaches **0.472** on the 118 LDSD test photos, against 0.68 with 470 photos: twenty times less data costs about 0.2 Dice. Here **transfer does help**: from the polyp weights 0.472 / 0.465, from random weights 0.434 / 0.419 (+0.04), while with 470 photos it made no difference. Two caveats: the test masks are LDSD's, so a model trained on my labels is also penalised for the definition differences above (the labels themselves only agree at 0.73); and the fine-tuned model picked its checkpoint at epoch 7 on just 6 validation photos, so the numbers are noisy.
+**My Roboflow dataset (7 Nov).** My hand labels agree with LDSD's masks on the same 30 photos at **Dice 0.730** (median 0.781; `dataset/custom/roboflow_leaf/agreement.csv`). Most of the gap is a difference in definition, not sloppiness: on leaf_00278 LDSD marks the whole yellowed leaf where I marked the spots (Dice 0.09), and on leaf_00076 I marked more of the speckled area than LDSD did. Trained on only **24** of my photos (120 with Roboflow's 5× copies), FANet reaches **0.517** on the 118 LDSD test photos, against 0.68 with 470 photos: twenty times less data costs about 0.16 Dice. Here **transfer does help**: from the polyp weights 0.517 / 0.520, from random weights 0.467 / 0.461 (+0.05), while with 470 photos it made no difference. Two caveats: the test masks are LDSD's, so a model trained on my labels is also penalised for the definition differences above (the labels themselves only agree at 0.73); and checkpoints are picked on just 6 validation photos, so the numbers are noisy.
+
+**Why constant learning rate.** The first Roboflow runs used the default schedule (lr ×0.1 after 5 epochs without validation improvement). With only 6 validation photos the validation loss is noisy, so the lr was cut three times within 30 epochs and the fine-tuned model's best checkpoint was from epoch 7. Re-run with `--lr-patience 0` (constant lr) for 100 epochs: best epochs 89 (fine-tuned) and 99 (scratch), and both models improve by about 0.04. The rule was fixed before seeing the test scores: the constant-lr runs become the main result whichever way they turn out, and the first runs stay in the table.
 
 The synthetic leaves are much easier than real photos (clean shapes, plain backgrounds), which is why the Roboflow set uses real photos.
 

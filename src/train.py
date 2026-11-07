@@ -129,6 +129,9 @@ def main():
                     help="ablation: memory stays all zeros, no previous mask is ever fed back")
     ap.add_argument("--init", help="checkpoint to start from (fine-tuning)")
     ap.add_argument("--early-stop", type=int, default=40, help="stop after N epochs without improvement (0 = never)")
+    ap.add_argument("--lr-patience", type=int, default=5,
+                    help="ReduceLROnPlateau patience (x0.1 after N epochs without improvement); 0 = constant lr. "
+                         "Use 0 for tiny validation sets, where a noisy val loss cuts the lr too early")
     ap.add_argument("--device", default="auto")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--amp", action="store_true",
@@ -161,7 +164,8 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     scaler = torch.amp.GradScaler("cuda") if args.amp and device.type == "cuda" else None
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", factor=0.1, patience=5)
+    scheduler = (torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", factor=0.1, patience=args.lr_patience)
+                 if args.lr_patience > 0 else None)
     loss_fn = DiceBCELoss()
 
     log_path = os.path.join(args.out, "log.csv")
@@ -177,7 +181,8 @@ def main():
                                              max_batches=args.max_batches, scaler=scaler)
         val_loss, val_scores = run_epoch(model, val_loader, val_mem, loss_fn, device,
                                          max_batches=args.max_batches, scaler=scaler)
-        scheduler.step(val_loss)
+        if scheduler is not None:
+            scheduler.step(val_loss)
 
         improved = val_loss < best
         if improved or args.memory_update == "always":

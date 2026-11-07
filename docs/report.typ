@@ -34,7 +34,7 @@
   #block(width: 88%, inset: 12pt, stroke: 0.6pt + luma(160), radius: 3pt)[
     #set align(left)
     #set par(justify: true)
-    *Abstract.* We implement FANet, a feedback-attention encoder–decoder for biomedical image segmentation, from scratch in PyTorch (no pretrained weights, no model libraries) and reproduce it on the paper's dataset, Kvasir-SEG. Under the paper's test protocol (ten rounds of iterative refinement starting from an Otsu mask) our model reaches a Dice coefficient of *0.842* at 256×256, against 0.880 reported at 512×512; starting the refinement from an empty mask gives *0.900*. Additional experiments show that a 512×512 run does not close the gap (0.831), that a no-feedback ablation reaches 0.883, and that the official code's unaligned memory acts as a regulariser. For the own-dataset requirement we built a semantic-segmentation dataset in Roboflow: 30 real leaf photos whose disease spots were labelled by hand, split 24/6 and augmented five times. The hand labels agree with the source dataset's masks at Dice 0.730. Fine-tuned from the polyp weights, FANet reaches Dice *0.472* on 118 held-out leaf photos, against 0.434 when trained from random weights.
+    *Abstract.* We implement FANet, a feedback-attention encoder–decoder for biomedical image segmentation, from scratch in PyTorch (no pretrained weights, no model libraries) and reproduce it on the paper's dataset, Kvasir-SEG. Under the paper's test protocol (ten rounds of iterative refinement starting from an Otsu mask) our model reaches a Dice coefficient of *0.842* at 256×256, against 0.880 reported at 512×512; starting the refinement from an empty mask gives *0.900*. Additional experiments show that a 512×512 run does not close the gap (0.831), that a no-feedback ablation reaches 0.883, and that the official code's unaligned memory acts as a regulariser. For the own-dataset requirement we built a semantic-segmentation dataset in Roboflow: 30 real leaf photos whose disease spots were labelled by hand, split 24/6 and augmented five times. The hand labels agree with the source dataset's masks at Dice 0.730. Fine-tuned from the polyp weights, FANet reaches Dice *0.517* on 118 held-out leaf photos, against 0.467 when trained from random weights.
   ]
 ]
 
@@ -192,15 +192,18 @@ All models are tested on the same 118 LDSD photos with LDSD's masks, ten refinem
   table(columns: (1fr, auto, auto), stroke: 0.4pt, inset: 5pt, align: (left, center, center),
     [Model], [Dice, Otsu start], [Dice, empty start],
     [Polyp model, no fine-tuning], [0.010], [0.004],
-    [*Our Roboflow set (24 photos ×5), from the polyp weights*], [*0.472*], [*0.465*],
-    [*Our Roboflow set, from random weights*], [0.434], [0.419],
+    [*Our Roboflow set (24 photos ×5), from the polyp weights*], [*0.517*], [*0.520*],
+    [*Our Roboflow set, from random weights*], [0.467], [0.461],
+    [Our Roboflow set, default lr schedule (fine-tuned / scratch)], [0.472 / 0.434], [0.465 / 0.419],
     [470 LDSD photos, from the polyp weights], [0.670], [0.681],
     [470 LDSD photos, from random weights], [0.678], [0.667],
   ),
   caption: [Transfer to leaf disease spots. The 470-photo rows use LDSD's masks and twenty times more labelled photos; they are a reference, not a competitor.],
 )
 
-Without fine-tuning the polyp model finds almost nothing on leaves, a clear domain gap. With only 24 labelled photos, starting from the polyp weights helps (0.472 against 0.434), while with 470 photos it made no difference. Twenty times less data costs about 0.2 Dice. Part of the remaining gap is the label definition: the model learns our definition of a spot but is scored against LDSD's, and the two agree only at 0.730.
+Without fine-tuning the polyp model finds almost nothing on leaves, a clear domain gap. With only 24 labelled photos, starting from the polyp weights helps (0.517 against 0.467), while with 470 photos it made no difference. Twenty times less data costs about 0.16 Dice.
+
+*Learning-rate schedule.* The Roboflow models are trained for 100 epochs at a constant learning rate. With the default schedule (rate ×0.1 whenever the validation loss stalls for 5 epochs), the 6 noisy validation photos cut the rate to almost zero within 30 epochs and both models scored about 0.04 lower (last row). This choice was fixed before looking at the test scores. Part of the remaining gap is the label definition: the model learns our definition of a spot but is scored against LDSD's, and the two agree only at 0.730.
 
 = Limitations
 - Each setting was trained once; differences of 0.01–0.02 Dice are within run-to-run noise.
@@ -210,7 +213,7 @@ Without fine-tuning the polyp model finds almost nothing on leaves, a clear doma
 - Research and coursework only; not validated for clinical use.
 
 = Conclusion and future work
-FANet was implemented from scratch and reproduced on Kvasir-SEG: Dice 0.842 under the paper's protocol (paper 0.880) and 0.900 with an empty starting mask. The experiments show that resolution does not explain the gap, that the feedback memory contributes less than reported, that the official unaligned memory works as a regulariser, and that 13% of the parameters never train. A semantic-segmentation dataset of 30 hand-labelled leaf photos was built and augmented in Roboflow, and the polyp model transferred to it (0.472 Dice on 118 unseen photos, better than training from scratch).
+FANet was implemented from scratch and reproduced on Kvasir-SEG: Dice 0.842 under the paper's protocol (paper 0.880) and 0.900 with an empty starting mask. The experiments show that resolution does not explain the gap, that the feedback memory contributes less than reported, that the official unaligned memory works as a regulariser, and that 13% of the parameters never train. A semantic-segmentation dataset of 30 hand-labelled leaf photos was built and augmented in Roboflow, and the polyp model transferred to it (0.517 Dice on 118 unseen photos, against 0.467 when trained from scratch).
 
 Future work: more hand-labelled leaf photos, a trainable soft gate for the fmask head, repeated runs with different seeds, and video, where the previous frame's mask is a natural feedback input.
 

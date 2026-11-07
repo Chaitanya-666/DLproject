@@ -541,19 +541,19 @@ const agreeMean = agreeRows ? agreeRows.reduce((a, r) => a + r.dice_vs_reference
     { text: f3(last(run, "eval_test_zeros")), options: { align: "center", bold: !!o.bold } }];
   const rows = [[hdr("Model (tested on 118 LDSD photos)"), hdr("Otsu start"), hdr("Empty start")],
     line("Polyp model, no fine-tuning", "ldsd_zeroshot"),
-    line("My 24 Roboflow photos, from polyp weights", "roboflow_leaf_ldsd", { bold: true }),
-    line("My 24 Roboflow photos, from random weights", "roboflow_leaf_scratch_ldsd", { bold: true }),
+    line("My 24 Roboflow photos, from polyp weights", "roboflow_leaf_constlr_ldsd", { bold: true }),
+    line("My 24 Roboflow photos, from random weights", "roboflow_leaf_scratch_constlr_ldsd", { bold: true }),
     line("470 LDSD photos, from polyp weights", "ldsd_finetune"),
     line("470 LDSD photos, from random weights", "ldsd_scratch")];
   s.addTable(rows, { x: 6.0, y: 1.4, w: 6.7, colW: [4.1, 1.3, 1.3], fontSize: 12, color: HEX.dk1,
     border: { type: "solid", pt: 0.5, color: "D5DEDF" }, rowH: 0.5, valign: "middle" });
-  const ft = last("roboflow_leaf_ldsd", "eval_test_zeros"), sc = last("roboflow_leaf_scratch_ldsd", "eval_test_zeros");
+  const ft = last("roboflow_leaf_constlr_ldsd", "eval_test_zeros"), sc = last("roboflow_leaf_scratch_constlr_ldsd", "eval_test_zeros");
   s.addText(bullets([
     "Without fine-tuning the polyp model finds almost nothing on leaves: a domain gap",
     ft !== undefined && sc !== undefined
       ? `With only 24 photos, starting from the polyp weights ${ft > sc ? "helps" : "does not help"}: ${f3(ft)} vs ${f3(sc)} (empty start)`
       : "Roboflow runs pending",
-    "10 refinement rounds, Dice per image averaged, as on Kvasir-SEG",
+    "Constant learning rate, 100 epochs: with only 6 validation photos the usual lr cut fired too early (first runs: 0.472 / 0.434)",
   ]), { x: 6.0, y: 4.65, w: 6.7, h: 1.8, isTextBox: true, fontSize: 13, color: C.text1, valign: "top", margin: 0, paraSpaceAfter: 6 });
   s.addNotes("Left: a close match and the worst disagreement between my labels and LDSD's. The agreement score is computed by src/roboflow_to_masks.py --compare. Right: every model is tested on the same 118 LDSD test photos, which were never used for training. The 470-photo rows are an upper reference: same photos source, 20 times more labelled data.");
 }
