@@ -29,3 +29,4 @@ data/
 # Deck build
 presentation/node_modules/
 presentation/package-lock.json
+submission/
