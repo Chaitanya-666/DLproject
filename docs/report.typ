@@ -54,7 +54,7 @@ The faculty brief asks for an individual project on object segmentation or detec
   [Implemented from scratch], [Every layer, the loss, training loop, metrics and refinement written with plain PyTorch primitives (@sec-impl).],
   [Paper's dataset], [Kvasir-SEG, the paper's 880/120 split ratio (@sec-setup).],
   [Own dataset in Roboflow], [30 real leaf photos labelled by hand, versioned and augmented in Roboflow (@sec-own).],
-  [PPT and notebook], [16-slide deck and an executed Jupyter notebook (@sec-deliv).],
+  [PPT and notebook], [17-slide deck and an executed Jupyter notebook (@sec-deliv).],
 )
 
 = Background
@@ -176,6 +176,7 @@ Colonoscopy images cannot be collected by a student, so we kept the *task* (segm
 
 The dataset is public at #link("https://universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne")[universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne].
 
+#fig("../presentation/assets/roboflow_steps.png", [Screenshots taken while building the dataset: (1) labelling a photo by hand, each layer is one outlined spot; (2) the 30 labelling jobs; (3) resizing to 256×256; (4) the 90° rotation augmentation. All 11 screenshots are in the submission package.])
 #fig("../presentation/assets/roboflow_grid.png", [The 30 photos in the Roboflow project with the hand-drawn polygon labels.], w: 92%)
 #fig("../presentation/assets/roboflow_version.png", [Version v1 as generated in Roboflow: split, preprocessing and augmentation.], w: 92%)
 
@@ -216,7 +217,7 @@ Future work: more hand-labelled leaf photos, a trainable soft gate for the fmask
 = Deliverables <sec-deliv>
 #table(columns: (auto, 1fr), stroke: 0.4pt, inset: 5pt,
   [Item], [Location in the submission package],
-  [Presentation (16 slides)], [`01_Presentation/` (PPTX and PDF)],
+  [Presentation (17 slides)], [`01_Presentation/` (PPTX and PDF)],
   [Notebook, executed with outputs], [`02_Notebook/FANet_project.ipynb` (and an HTML copy)],
   [Roboflow dataset], [`03_Roboflow_Dataset/`: exported zip, 11 screenshots of each step, label agreement CSV; public link above],
   [This report], [`04_Report/`],

@@ -489,6 +489,26 @@ const agreeMean = agreeRows ? agreeRows.reduce((a, r) => a + r.dice_vs_reference
 }
 
 {
+  const s = content("Roboflow, step by step (my screenshots)", "Own dataset");
+  s.addImage({ path: asset("roboflow_steps.png"), x: 0.6, y: 1.45, w: 12.1, h: 2.76 });
+  const steps = [
+    [0.6, 4.3, "1. Label by hand", "Smart Polygon + Polygon; each layer on the left is one spot I outlined (leaf_00097)"],
+    [4.98, 1.84, "2. 30 jobs", "one labelling job per photo, about 2 hours"],
+    [6.9, 2.82, "3. Resize", "stretch to 256×256, the training size"],
+    [9.8, 2.9, "4. Augment", "90° turns shown; also flips, ±15° tilt, ±15% brightness"],
+  ];
+  steps.forEach(([x, w, h, b]) => {
+    s.addText(h, { x, y: 4.35, w, h: 0.4, isTextBox: true, fontFace: THEME.headFontFace, fontSize: 15, bold: true, color: C.text2, margin: 0 });
+    s.addText(b, { x, y: 4.75, w, h: 0.9, isTextBox: true, fontSize: 12, color: C.text1, valign: "top", margin: 0 });
+  });
+  s.addText([
+    { text: "Then: ", options: { bold: true, color: C.accent2 } },
+    { text: "split 24 / 6 / 0, generate version v1 (126 images), export as Semantic Segmentation Masks, convert with src/roboflow_to_masks.py." },
+  ], { x: 0.6, y: 5.85, w: 12.1, h: 0.5, isTextBox: true, fontSize: 13, color: C.text1, margin: 0 });
+  s.addNotes("These are my own screenshots from building the dataset on 7 Nov. All 11 screenshots are in the submission package under 03_Roboflow_Dataset/screenshots.");
+}
+
+{
   const s = content("Roboflow version v1: split, resize, 5× augmentation", "Own dataset");
   s.addImage({ path: asset("roboflow_version.png"), x: 0.6, y: 1.4, w: 8.2, h: 3.79 });
   caption(s, 0.6, 5.25, 8.2, "Screenshot of the generated version: 126 images = 24 train photos × 5 + 6 validation photos", { size: 11 });
