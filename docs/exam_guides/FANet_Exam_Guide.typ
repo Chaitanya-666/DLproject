@@ -48,6 +48,7 @@
 #v(0.5cm)
 #block(width: 100%, inset: 11pt, stroke: 0.7pt + rgb("#1f6f78"), radius: 3pt)[
   *Why this guide looks like this.* Ma'am will open your *report* and your *slides* and ask about anything in them. So this guide follows them exactly:
+  - *Part 0* starts from zero: the story, the pipeline, the words, the repo, how to run it.
   - *Part A* walks through `docs/report.typ` in its own order, with its own headings.
   - *Part B* walks through the 17 slides in order.
   - *Part C* lists the few places where the report, the slides and the logs disagree, and what to say.
@@ -59,11 +60,134 @@
   #bx("Where it is in the code", rgb("#e6f2f3"), rgb("#1f6f78"))[`file:line` in the `DLproject` repo, with a few real lines copied from `src/`.]
   #bx("Ma'am may ask", rgb("#fff6e2"), rgb("#b9790a"))[Two to four likely questions with short answers.]
 
-  *How to read it.* Today: Part A. Tomorrow: Part B, saying each slide out loud. Thursday morning: Parts C and D.
+  *How to read it.* Tonight: Part 0, then Part A. Wednesday: Part B, saying each slide out loud, then Part C. Thursday morning: Part D. (Details in 0.6.)
 ]
 
 #pagebreak()
 #outline(depth: 2, indent: 1em)
+
+// =====================================================================
+= Part 0: your project from zero
+
+#let story(body) = bx("The story", rgb("#f3f0fa"), rgb("#5b3fa0"), body)
+
+== 0.1 The whole project as a story
+#story[
+- *The problem.* Colorectal cancer usually starts as a *polyp*, a small growth on the colon wall. Doctors find polyps with a camera test called *colonoscopy*, but about one adenoma in four is missed (26%, Zhao et al. 2019). Each +1% in detection lowers later cancer risk by about 3% (Corley et al. 2014). A model that outlines polyps can be a second pair of eyes.
+- *What goes in and what comes out.* In: one colour colonoscopy photo, resized to 256×256. Out: a 256×256 *mask*, one 0/1 value per pixel (1 = polyp). See the pictures below.
+- *Segmentation vs detection here.* *Segmentation* = a label for every pixel (your main output). *Detection* = a box around each object. You get boxes for free by drawing one box around each blob of your mask.
+- *What you did.* You implemented the IEEE TNNLS 2023 paper *FANet* from scratch in PyTorch. FANet remembers the mask it predicted for each image and feeds it back in as a "look here" hint (feedback attention). At test time it refines its own mask over 10 rounds, starting from a rough Otsu guess.
+- *The headline results* (Kvasir-SEG, 120 test images): Dice *0.842* with the paper's protocol, against *0.880* in the paper. *0.900* from an empty start. Without feedback: *0.883*. At 512×512: *0.831*.
+- *The custom dataset.* You took 30 public leaf photos (LDSD, CC0), drew the disease spots by hand in Roboflow, and made 126 images with augmentation. Fine-tuned from your polyp model: *0.517* Dice on 118 unseen leaf photos (0.467 from random weights).
+]
+
+#figure(image("figures/kvasir_example.png", width: 80%),
+  caption: [Input and target. Left: a Kvasir-SEG test image (the input). Middle: its ground-truth mask, drawn by a doctor (white = polyp). Right: the mask over the image. From `presentation/assets/kvasir_example.png`.])
+#figure(image("figures/strip_kvasir_official.png", width: 100%),
+  caption: [What your model does on three test images. Columns: image | ground truth | Otsu start | round 1 | round 2 | round 10. The *last column is your final prediction* (blue overlay). From `presentation/assets/strip_kvasir_official.png` (slide 11, report Fig.).])
+
+== 0.2 The pipeline, end to end
+Thirteen steps from raw data to your report. Each row: what happens, and where.
+#{
+set text(9.6pt)
+table(columns: (auto, auto, 1fr, auto),
+  [\#], [Step], [What happens here], [File : lines],
+  [1], [Download], [Get Kvasir-SEG (1000 images + masks) into `data/Kvasir-SEG/images` and `masks`.], [`dataset/README.md`],
+  [2], [Split], [Shuffle with seed 42; first 120 = test, rest 880 = train; write `train.txt`, `test.txt`.], [`src/split.py:36-49`],
+  [3], [Load], [Resize every image and mask to 256×256 and keep them in memory; return (image, mask, index).], [`src/dataset.py:59-113`],
+  [4], [Memory start], [Make one Otsu mask per image: the first "previous mask".], [`src/memory.py:31-52`],
+  [5], [Augmentation], [Randomly rotate (±35°) and flip image + mask; the memory is not moved.], [`src/augment.py:78-99`, `src/train.py:79-82`],
+  [6], [Model], [Encoder (4 blocks) → decoder (4 blocks), each with a MixPool that uses the memory; 1×1 head.], [`src/model.py:56-88`, `src/blocks.py:109-116`],
+  [7], [Loss], [0.5·BCE + 0.5·Dice between prediction and true mask.], [`src/losses.py:21-29`],
+  [8], [Training loop], [For each batch: predict, loss, backward, Adam step, stage the predicted mask. Laptop RTX 5050, or Kaggle T4 via `kaggle/offload.sh`.], [`src/train.py:54-111`, `:177-217`],
+  [9], [Checkpoint], [If the validation loss improved: commit the memory and save `best.pt`.], [`src/train.py:187-201`],
+  [10], [Evaluation], [Load `best.pt`; start from Otsu; predict and feed back for 10 rounds.], [`src/evaluate.py:81-120`],
+  [11], [Metrics], [Per-image Dice, IoU, precision, recall, F2; boxes from blobs; write `results.csv`.], [`src/metrics.py:27-149`],
+  [12], [Figures], [Learning curves, refinement chart, image strips.], [`src/figures.py`, `presentation/make_assets.py`],
+  [13], [Report and deck], [The deck reads the CSVs in `runs/`; the report is written in Typst.], [`presentation/build_deck.js`, `docs/report.typ`],
+)
+}
+
+== 0.3 The words you need before Part A
+#{
+set text(9.8pt)
+table(columns: (auto, 1fr, auto),
+  [Word], [Meaning (1-2 lines)], [Your notes],
+  [Image as numbers], [A grayscale image is one matrix; a colour image has 3 channels (R, G, B). Your code divides pixels by 255 so they lie in [0, 1].], [Ch4 §3],
+  [Tensor], [A grid of numbers with several dimensions. A batch of images is B × 3 × H × W; a batch of masks is B × 1 × H × W.], [not in notes],
+  [Convolution], [A small filter slides over the image and makes a feature map; each filter detects one kind of pattern.], [Ch4 §2, §3],
+  [Channels], [The depth of a feature map. A conv layer's output depth = its number of filters.], [Ch4 §4],
+  [Pooling], [Shrinks height and width. Max pooling keeps the largest value in each window.], [Ch4 §3],
+  [Encoder / decoder], [Encoder compresses; decoder rebuilds. In your model the decoder rebuilds a mask.], [Master §2.13],
+  [Epoch / batch], [Epoch = one full pass over the training set. Batch = the images used for one update (8 here).], [Master §1.3, §1.11],
+  [Loss], [One number saying how wrong the prediction is; training makes it smaller.], [Master §1.3, §1.9],
+  [Gradient descent], [Move each weight against its gradient: $W_"new" = W_"old" - alpha dot (partial "Loss") / (partial W)$.], [Master §1.11],
+  [Sigmoid], [$1 slash (1 + e^(-x))$: squashes any number into (0, 1), read as a probability.], [Master §1.10],
+  [Threshold 0.5], [Probability above 0.5 → pixel = polyp (1); otherwise background (0).], [not in notes; `src/memory.py:64`],
+  [Dice / IoU], [Overlap of predicted and true masks. Dice = 2TP/(2TP+FP+FN); IoU = intersection ÷ union.], [Master §1.9, Ch5 §6],
+  [Overfitting], ["Low training error, high test error": the model memorised instead of learned.], [Ch4 §8],
+  [Train / test split], [Train on one part; "test the network on new data" it never saw.], [Master §1.3 step 7],
+  [Checkpoint], [A saved copy of the model's weights; yours is `best.pt` (the epoch with the lowest validation loss).], [not in notes; `src/train.py:193`],
+  [GPU], [Graphics card that runs the maths in parallel; "GPU training makes training much faster".], [Master §4.13],
+)
+}
+
+== 0.4 A tour of the repo
+The repo is `/mnt/Windows_D/College-work/DLproject` (GitHub `Chaitanya-666/DLproject`).
+#block(breakable: false, table(columns: (auto, 1fr),
+  [Folder], [What is inside],
+  [`src/`], [All the code: model, blocks, memory, data, augmentation, loss, metrics, training, evaluation, memory probe, Roboflow converter, synthetic leaves, figures.],
+  [`notebooks/`], [`FANet_project.ipynb` (the submission notebook, run with outputs) and `kaggle_fanet.ipynb`.],
+  [`kaggle/`], [`offload.sh` (send a training run to a free Kaggle GPU and pull the results) and `run_template.py`.],
+  [`runs/`], [One folder per experiment: `log.csv` (per epoch), `best.pt` (weights, not in git), `eval_test/results.csv` (per round), `memory_probe.csv`.],
+  [`data/`], [Downloaded data, not in git: `Kvasir-SEG/`, `LDSD/`, the Roboflow export and the 30 upload photos.],
+  [`dataset/`], [Small datasets kept in git: `custom/synthetic_leaf/` (60 generated images) and `custom/roboflow_leaf/` (your converted Roboflow set, `agreement.csv`).],
+  [`presentation/`], [The PPTX, `build_deck.js` (builds it), `figures/` and `assets/` (pictures and Roboflow screenshots).],
+  [`docs/`], [`report.typ` / `report.pdf` (the submitted report), the project book and the study guide.],
+  [`submission/`], [The zipped package sent to ma'am (presentation, notebook, Roboflow dataset, report, code) and the Hugging Face weights. Not in git.],
+))
+#bx("If ma'am says \"show me the code\", open these 5 files", rgb("#e6f2f3"), rgb("#1f6f78"))[
++ `src/blocks.py` lines 109-116: *MixPool*, the heart of FANet.
++ `src/model.py` lines 56-88: the whole *FANet* (encoders, decoders, head).
++ `src/memory.py`: the *memory* (Otsu start, stage, commit).
++ `src/train.py` lines 54-111 and 187-201: the *training step* and the *save/commit rule*.
++ `src/evaluate.py` lines 95-120: the *10-round refinement*.
+]
+
+== 0.5 How to run it (if you are asked to demo)
+Run everything from the repo root, inside the project's Python environment (`source ~/.venvs/dlproject/bin/activate.fish`). Do not retrain live: the main run took about 1.7 hours. Use the saved `best.pt`.
+```bash
+python -m src.model
+#   output: (2, 1, 256, 256)
+#   parameters: 7,720,266
+
+python -m src.evaluate --ckpt runs/kvasir_official/best.pt \
+    --data data/Kvasir-SEG --split test --iters 10
+#   round 1 fps 54.1129 dice 0.6148 jaccard 0.5115 ...
+#   round 10 fps 87.3115 dice 0.8422 jaccard 0.7790 ...
+#   saved to runs/kvasir_official/eval_test     (results.csv, strips/, masks/)
+
+python -m src.memory_probe --ckpt runs/kvasir_official/best.pt \
+    --data data/Kvasir-SEG
+#   Otsu          dice 0.6151  precision 0.5301  recall 0.9653   (one line per start)
+#   saved runs/kvasir_official/memory_probe.csv
+
+# training (only to show it starts; the README's 1-minute sanity check):
+python -m src.train --data data/Kvasir-SEG --out runs/sanity --epochs 2 --max-batches 20
+#   train 880 | test 120 | device cuda
+#   FANet parameters: 7,720,266
+#   epoch   1 | loss ... | dice ... | lr 1.0e-04 | ...s | saved
+```
+The full training command was `python -m src.train --data data/Kvasir-SEG --out runs/kvasir_official` (README §8). Each epoch prints train/validation loss and Dice; `log.csv` and `best.pt` go into the `--out` folder. Add `--start zeros` to `evaluate` for the 0.900 empty-start result.
+
+== 0.6 How to use this guide
+#table(columns: (auto, 1fr),
+  [When], [What to read],
+  [Tonight (Tue 17 Nov)], [Part 0 (this part) slowly, then Part A, report section by section. Say each "Ma'am may ask" answer out loud.],
+  [Wednesday 18 Nov], [Part B: present all 17 slides out loud once, using the "Your slide says" box as your script. Then Part C twice.],
+  [Thursday morning], [Part D (cheat sheet) and the five code files in 0.4.],
+)
+
 
 // =====================================================================
 = Part A: your report, section by section
