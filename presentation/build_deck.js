@@ -89,6 +89,8 @@ pres.defineSlideMaster({
 const content = (title, section) => {
   const s = pres.addSlide({ masterName: "CONTENT", sectionTitle: section });
   s.addText(title, { placeholder: "title" });
+  s.addText(section.toUpperCase(), { x: 0.6, y: 0.08, w: 6, h: 0.25, isTextBox: true, fontSize: 10, bold: true,
+    charSpacing: 2, color: C.accent1, margin: 0 });
   return s;
 };
 
@@ -125,9 +127,9 @@ const bullets = (items) => items.map((t, i) => ({ text: t, options: { bullet: tr
 
 // ------------------------------------------------------------------ 1. title
 
-pres.addSection({ title: "Problem" });
+pres.addSection({ title: "Problem Statement" });
 {
-  const s = pres.addSlide({ masterName: "TITLE_DARK", sectionTitle: "Problem" });
+  const s = pres.addSlide({ masterName: "TITLE_DARK", sectionTitle: "Problem Statement" });
   s.addText("Polyp Segmentation with FANet", { placeholder: "title" });
   s.addText("Feedback Attention Network (IEEE TNNLS 2023), implemented from scratch on Kvasir-SEG, with transfer to plant disease spotting",
     { placeholder: "body" });
@@ -139,10 +141,32 @@ pres.addSection({ title: "Problem" });
   s.addNotes("Introduce the topic: segmenting colorectal polyps in colonoscopy images using FANet, an IEEE TNNLS 2023 paper. Everything is implemented from scratch in PyTorch and trained on the paper's own dataset, Kvasir-SEG. The own small dataset is leaf disease spots.");
 }
 
+// ------------------------------------------------------------------ outline
+
+{
+  const s = content("Outline", "Problem Statement");
+  const parts = [
+    ["1", "Problem Statement", "Missed polyps in colonoscopy; why pixel-level segmentation"],
+    ["2", "Proposed System", "FANet: a U-Net that feeds its previous mask back in; built from scratch in PyTorch"],
+    ["3", "Dataset Used", "Kvasir-SEG (the paper's dataset) and my own leaf-disease dataset labelled in Roboflow"],
+    ["4", "Result Analysis", "Dice vs the paper, refinement rounds, ablation, transfer to real leaves"],
+    ["5", "Future Scope", "More own data, the paper's full protocol, video, multi-class"],
+  ];
+  parts.forEach(([n, h, b], i) => {
+    const y = 1.5 + i * 1.05;
+    s.addText(n, { x: 0.6, y, w: 0.8, h: 0.8, isTextBox: true, shape: pres.shapes.OVAL, fill: { color: C.accent1 },
+      fontFace: THEME.headFontFace, fontSize: 24, bold: true, color: C.background1, align: "center", valign: "middle", margin: 0 });
+    s.addText(h, { x: 1.7, y, w: 3.6, h: 0.8, isTextBox: true, fontFace: THEME.headFontFace, fontSize: 22, bold: true,
+      color: C.text2, valign: "middle", margin: 0 });
+    s.addText(b, { x: 5.4, y, w: 7.3, h: 0.8, isTextBox: true, fontSize: 15, color: C.text1, valign: "middle", margin: 0 });
+  });
+  s.addNotes("The five parts the brief asks for, in order.");
+}
+
 // ------------------------------------------------------------------ 2. problem
 
 {
-  const s = content("One in four adenomas is missed during colonoscopy", "Problem");
+  const s = content("One in four adenomas is missed during colonoscopy", "Problem Statement");
   s.addText("26%", { x: 0.6, y: 1.6, w: 3.4, h: 1.2, isTextBox: true, fontFace: THEME.headFontFace,
     fontSize: 66, bold: true, color: C.accent2, margin: 0 });
   s.addText("adenoma miss rate in tandem colonoscopy (meta-analysis, Zhao et al., Gastroenterology 2019)",
@@ -163,7 +187,7 @@ pres.addSection({ title: "Problem" });
 // ------------------------------------------------------------------ 3. task
 
 {
-  const s = content("Segmentation labels every pixel, not the whole image", "Problem");
+  const s = content("Segmentation labels every pixel, not the whole image", "Problem Statement");
   const kinds = [
     ["Classification", "One label per image: \"polyp present\". Not allowed by the brief"],
     ["Detection", "A box around each object. We derive boxes from the mask (connected blobs)"],
@@ -183,9 +207,9 @@ pres.addSection({ title: "Problem" });
 
 // ------------------------------------------------------------------ 4. paper
 
-pres.addSection({ title: "Method" });
+pres.addSection({ title: "Proposed System" });
 {
-  const s = content("FANet remembers its last prediction for every image", "Method");
+  const s = content("FANet remembers its last prediction for every image", "Proposed System");
   card(s, 0.6, 1.45, 5.4, 4.05, "The paper", [
     { text: "FANet: A Feedback Attention Network for Improved Biomedical Image Segmentation", options: { bold: true, breakLine: true } },
     { text: "N. K. Tomar, D. Jha, M. A. Riegler, H. D. Johansen, D. Johansen, J. Rittscher, P. Halvorsen, S. Ali", options: { breakLine: true } },
@@ -213,7 +237,7 @@ pres.addSection({ title: "Method" });
 // ------------------------------------------------------------------ 5. architecture
 
 {
-  const s = content("Architecture: a U-Net that also takes the previous mask", "Method");
+  const s = content("Architecture: a U-Net that also takes the previous mask", "Proposed System");
   const W = 1.55, H = 0.72;
   const enc = [[0.75, 1.75, "Encoder 1", "32 ch · 256²"], [1.55, 2.7, "Encoder 2", "64 ch · 128²"],
     [2.35, 3.65, "Encoder 3", "128 ch · 64²"], [3.15, 4.6, "Encoder 4", "256 ch · 32²"]];
@@ -251,7 +275,7 @@ pres.addSection({ title: "Method" });
 // ------------------------------------------------------------------ 6. MixPool
 
 {
-  const s = content("MixPool: the previous mask decides where to look", "Method");
+  const s = content("MixPool: the previous mask decides where to look", "Proposed System");
   box(s, 0.6, 3.05, 1.5, 0.8, "features x", { bold: true });
   box(s, 2.7, 1.5, 2.6, 0.8, "fmask head\nconv3×3 · BN · ReLU · conv1×1 · σ", { size: 11 });
   box(s, 5.8, 1.5, 1.4, 0.8, "> 0.5\nF (0/1)", { size: 12 });
@@ -286,7 +310,7 @@ pres.addSection({ title: "Method" });
 // ------------------------------------------------------------------ 7. training + refinement
 
 {
-  const s = content("Each image's last prediction is fed back as its next input", "Method");
+  const s = content("Each image's last prediction is fed back as its next input", "Proposed System");
   const steps = [
     ["Start", "Before epoch 1, every image's memory is an Otsu threshold of the blurred grey image"],
     ["Predict", "pred = FANet(image, memory[i]); loss = 0.5·BCE + 0.5·Dice; Adam step"],
@@ -315,9 +339,8 @@ pres.addSection({ title: "Method" });
 
 // ------------------------------------------------------------------ 8. implementation
 
-pres.addSection({ title: "Implementation" });
 {
-  const s = content("Every layer, loss and metric is written from scratch", "Implementation");
+  const s = content("Every layer, loss and metric is written from scratch", "Proposed System");
   const files = [
     ["blocks.py", "Squeeze-excite, residual block, MixPool"],
     ["model.py", "Encoder / decoder blocks, FANet"],
@@ -343,8 +366,9 @@ pres.addSection({ title: "Implementation" });
 
 // ------------------------------------------------------------------ 9. setup
 
+pres.addSection({ title: "Dataset Used" });
 {
-  const s = content("Setup: Kvasir-SEG with the paper's 880 / 120 split", "Implementation");
+  const s = content("Setup: Kvasir-SEG with the paper's 880 / 120 split", "Dataset Used");
   card(s, 0.6, 1.45, 4.6, 3.95, "Kvasir-SEG", bullets([
     "1000 colonoscopy images with polyp masks drawn by a doctor and verified by a gastroenterologist (Vestre Viken, Norway)",
     "The paper's own polyp dataset (same Simula group)",
@@ -365,15 +389,70 @@ pres.addSection({ title: "Implementation" });
   s.addNotes("The paper trains at 512x512 for 100 epochs; the authors' public code uses 256x256, batch 2, up to 500 epochs. We train 256 on the laptop and 512 on Kaggle. The checkpoint is chosen on the test images, as in the authors' code, which is slightly optimistic; a separate validation split is possible with src.split --val.");
 }
 
+const RF_LINK = "universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne";
+const agreeRows = readCsv(path.join(ROOT, "dataset/custom/roboflow_leaf/agreement.csv"));
+const agreeMean = agreeRows ? agreeRows.reduce((a, r) => a + r.dice_vs_reference, 0) / agreeRows.length : undefined;
+{
+  const s = content("Own dataset: 30 leaf photos, hand-labelled in Roboflow", "Dataset Used");
+  s.addImage({ path: asset("roboflow_grid.png"), x: 0.6, y: 1.4, w: 7.6, h: 4.6 });
+  caption(s, 0.6, 6.05, 7.6, "All 30 photos in the Roboflow project, with my polygon labels drawn on them", { size: 11 });
+  card(s, 8.5, 1.4, 4.2, 5.0, "How it was built", bullets([
+    "Task kept, domain changed: irregular spots on a textured surface, but leaf disease instead of polyps (colonoscopy images cannot be collected by a student)",
+    "Photos: 30 real diseased-leaf photos from the public LDSD set (CC0); taking our own was not possible",
+    "Labels: every disease spot outlined by me in Roboflow (Smart Polygon + Polygon), about 2 hours",
+    "Project type: Semantic Segmentation, one class, so the export is a pixel mask, not boxes",
+  ]), { size: 13 });
+  caption(s, 8.5, 6.45, 4.2, RF_LINK, { size: 11, italic: true });
+  s.addNotes("Ma'am asked for a manual dataset built in Roboflow. Polyp images need a hospital, so I kept the same segmentation task and moved to leaf disease spots. The photos are public (LDSD, CC0) because collecting my own diseased-leaf photos was not possible; the labels are mine, drawn by hand. Semantic Segmentation was chosen as the project type because an Object Detection project would only store boxes, and FANet learns from pixel masks.");
+}
+
+{
+  const s = content("Roboflow, step by step (my screenshots)", "Dataset Used");
+  s.addImage({ path: asset("roboflow_steps.png"), x: 0.6, y: 1.45, w: 12.1, h: 2.76 });
+  const steps = [
+    [0.6, 4.3, "1. Label by hand", "Smart Polygon + Polygon; each layer on the left is one spot I outlined (leaf_00097)"],
+    [4.98, 1.84, "2. 30 jobs", "one labelling job per photo, about 2 hours"],
+    [6.9, 2.82, "3. Resize", "stretch to 256×256, the training size"],
+    [9.8, 2.9, "4. Augment", "90° turns shown; also flips, ±15° tilt, ±15% brightness"],
+  ];
+  steps.forEach(([x, w, h, b]) => {
+    s.addText(h, { x, y: 4.35, w, h: 0.4, isTextBox: true, fontFace: THEME.headFontFace, fontSize: 15, bold: true, color: C.text2, margin: 0 });
+    s.addText(b, { x, y: 4.75, w, h: 0.9, isTextBox: true, fontSize: 12, color: C.text1, valign: "top", margin: 0 });
+  });
+  s.addText([
+    { text: "Then: ", options: { bold: true, color: C.accent2 } },
+    { text: "split 24 / 6 / 0, generate version v1 (126 images), export as Semantic Segmentation Masks, convert with src/roboflow_to_masks.py." },
+  ], { x: 0.6, y: 5.85, w: 12.1, h: 0.5, isTextBox: true, fontSize: 13, color: C.text1, margin: 0 });
+  s.addNotes("These are my own screenshots from building the dataset on 7 Nov. All 11 screenshots are in the submission package under 03_Roboflow_Dataset/screenshots.");
+}
+
+{
+  const s = content("Roboflow version v1: split, resize, 5× augmentation", "Dataset Used");
+  s.addImage({ path: asset("roboflow_version.png"), x: 0.6, y: 1.4, w: 8.2, h: 3.79 });
+  caption(s, 0.6, 5.25, 8.2, "Screenshot of the generated version: 126 images = 24 train photos × 5 + 6 validation photos", { size: 11 });
+  card(s, 9.1, 1.4, 3.6, 5.0, "Why these settings", bullets([
+    "24 / 6 / 0 split: the test set is LDSD's own 118 photos, never seen in training",
+    "256×256 stretch: the size the model is trained at; image and mask stretch together",
+    "Flips, 90° turns, ±15° tilt: a leaf has no natural 'up'",
+    "±15% brightness: photos taken in different light",
+    "5× only on train; validation stays real",
+  ]), { size: 13 });
+  s.addText([
+    { text: "Offline vs online augmentation: ", options: { bold: true, color: C.accent2 } },
+    { text: "Roboflow's copies are fixed files (offline); our training code also flips and rotates differently in every epoch (online)." },
+  ], { x: 0.6, y: 5.7, w: 8.2, h: 0.7, isTextBox: true, fontSize: 13, color: C.text1, valign: "top", margin: 0 });
+  s.addNotes("Exported in Roboflow's Semantic Segmentation Masks format: each mask pixel holds a class number (0 background, 1 disease). src/roboflow_to_masks.py converts it to our images/ + masks/ layout and keeps Roboflow's train/valid split, so the checkpoint is chosen on Roboflow's validation photos, never on the test photos.");
+}
+
 // ------------------------------------------------------------------ 10. results table
 
-pres.addSection({ title: "Results" });
+pres.addSection({ title: "Result Analysis" });
 const MAIN = "kvasir_official";
 const main = evalRows(MAIN), mainBest = bestRound(main);
 const zeros = evalRows(MAIN, "eval_test_zeros");
 const nofbRows = evalRows("kvasir_nofb"), nofbLast = nofbRows && nofbRows[0];
 {
-  const s = content("Results on the 120 Kvasir-SEG test images", "Results");
+  const s = content("Results on the 120 Kvasir-SEG test images", "Result Analysis");
   const hdr = (t) => ({ text: t, options: { bold: true, color: HEX.lt1, fill: { color: HEX.dk2 }, align: "center" } });
   const line = (name, r, note, o = {}) => [
     { text: name, options: { bold: !!o.bold } },
@@ -408,7 +487,7 @@ const nofbRows = evalRows("kvasir_nofb"), nofbLast = nofbRows && nofbRows[0];
 // ------------------------------------------------------------------ 11. refinement
 
 {
-  const s = content("Refinement: an empty start climbs higher than Otsu", "Results");
+  const s = content("Refinement: an empty start climbs higher than Otsu", "Result Analysis");
   if (main) {
     const labels = main.map((r) => String(r.round));
     const lines = [{ name: "Dice, Otsu start (paper's protocol)", labels, values: main.map((r) => r.dice) }];
@@ -442,7 +521,7 @@ const nofbRows = evalRows("kvasir_nofb"), nofbLast = nofbRows && nofbRows[0];
 // ------------------------------------------------------------------ 12. finding
 
 {
-  const s = content("Finding: an aligned memory teaches the model to copy it", "Results");
+  const s = content("Finding: an aligned memory teaches the model to copy it", "Result Analysis");
   const pa = probe("kvasir"), po = probe(MAIN);
   const order = ["Otsu", "zeros", "ones", "own memory", "ground truth"];
   const pick = (p) => order.map((k) => { const r = p && p.find((x) => x.start === k); return r ? r.dice : 0; });
@@ -470,64 +549,8 @@ const nofbRows = evalRows("kvasir_nofb"), nofbLast = nofbRows && nofbRows[0];
 
 // ------------------------------------------------------------------ 13. own dataset (Roboflow)
 
-pres.addSection({ title: "Own dataset" });
-const RF_LINK = "universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne";
-const agreeRows = readCsv(path.join(ROOT, "dataset/custom/roboflow_leaf/agreement.csv"));
-const agreeMean = agreeRows ? agreeRows.reduce((a, r) => a + r.dice_vs_reference, 0) / agreeRows.length : undefined;
 {
-  const s = content("Own dataset: 30 leaf photos, hand-labelled in Roboflow", "Own dataset");
-  s.addImage({ path: asset("roboflow_grid.png"), x: 0.6, y: 1.4, w: 7.6, h: 4.6 });
-  caption(s, 0.6, 6.05, 7.6, "All 30 photos in the Roboflow project, with my polygon labels drawn on them", { size: 11 });
-  card(s, 8.5, 1.4, 4.2, 5.0, "How it was built", bullets([
-    "Task kept, domain changed: irregular spots on a textured surface, but leaf disease instead of polyps (colonoscopy images cannot be collected by a student)",
-    "Photos: 30 real diseased-leaf photos from the public LDSD set (CC0); taking our own was not possible",
-    "Labels: every disease spot outlined by me in Roboflow (Smart Polygon + Polygon), about 2 hours",
-    "Project type: Semantic Segmentation, one class, so the export is a pixel mask, not boxes",
-  ]), { size: 13 });
-  caption(s, 8.5, 6.45, 4.2, RF_LINK, { size: 11, italic: true });
-  s.addNotes("Ma'am asked for a manual dataset built in Roboflow. Polyp images need a hospital, so I kept the same segmentation task and moved to leaf disease spots. The photos are public (LDSD, CC0) because collecting my own diseased-leaf photos was not possible; the labels are mine, drawn by hand. Semantic Segmentation was chosen as the project type because an Object Detection project would only store boxes, and FANet learns from pixel masks.");
-}
-
-{
-  const s = content("Roboflow, step by step (my screenshots)", "Own dataset");
-  s.addImage({ path: asset("roboflow_steps.png"), x: 0.6, y: 1.45, w: 12.1, h: 2.76 });
-  const steps = [
-    [0.6, 4.3, "1. Label by hand", "Smart Polygon + Polygon; each layer on the left is one spot I outlined (leaf_00097)"],
-    [4.98, 1.84, "2. 30 jobs", "one labelling job per photo, about 2 hours"],
-    [6.9, 2.82, "3. Resize", "stretch to 256×256, the training size"],
-    [9.8, 2.9, "4. Augment", "90° turns shown; also flips, ±15° tilt, ±15% brightness"],
-  ];
-  steps.forEach(([x, w, h, b]) => {
-    s.addText(h, { x, y: 4.35, w, h: 0.4, isTextBox: true, fontFace: THEME.headFontFace, fontSize: 15, bold: true, color: C.text2, margin: 0 });
-    s.addText(b, { x, y: 4.75, w, h: 0.9, isTextBox: true, fontSize: 12, color: C.text1, valign: "top", margin: 0 });
-  });
-  s.addText([
-    { text: "Then: ", options: { bold: true, color: C.accent2 } },
-    { text: "split 24 / 6 / 0, generate version v1 (126 images), export as Semantic Segmentation Masks, convert with src/roboflow_to_masks.py." },
-  ], { x: 0.6, y: 5.85, w: 12.1, h: 0.5, isTextBox: true, fontSize: 13, color: C.text1, margin: 0 });
-  s.addNotes("These are my own screenshots from building the dataset on 7 Nov. All 11 screenshots are in the submission package under 03_Roboflow_Dataset/screenshots.");
-}
-
-{
-  const s = content("Roboflow version v1: split, resize, 5× augmentation", "Own dataset");
-  s.addImage({ path: asset("roboflow_version.png"), x: 0.6, y: 1.4, w: 8.2, h: 3.79 });
-  caption(s, 0.6, 5.25, 8.2, "Screenshot of the generated version: 126 images = 24 train photos × 5 + 6 validation photos", { size: 11 });
-  card(s, 9.1, 1.4, 3.6, 5.0, "Why these settings", bullets([
-    "24 / 6 / 0 split: the test set is LDSD's own 118 photos, never seen in training",
-    "256×256 stretch: the size the model is trained at; image and mask stretch together",
-    "Flips, 90° turns, ±15° tilt: a leaf has no natural 'up'",
-    "±15% brightness: photos taken in different light",
-    "5× only on train; validation stays real",
-  ]), { size: 13 });
-  s.addText([
-    { text: "Offline vs online augmentation: ", options: { bold: true, color: C.accent2 } },
-    { text: "Roboflow's copies are fixed files (offline); our training code also flips and rotates differently in every epoch (online)." },
-  ], { x: 0.6, y: 5.7, w: 8.2, h: 0.7, isTextBox: true, fontSize: 13, color: C.text1, valign: "top", margin: 0 });
-  s.addNotes("Exported in Roboflow's Semantic Segmentation Masks format: each mask pixel holds a class number (0 background, 1 disease). src/roboflow_to_masks.py converts it to our images/ + masks/ layout and keeps Roboflow's train/valid split, so the checkpoint is chosen on Roboflow's validation photos, never on the test photos.");
-}
-
-{
-  const s = content("Real leaves: my labels and the transferred model", "Own dataset");
+  const s = content("Real leaves: my labels and the transferred model", "Result Analysis");
   s.addImage({ path: asset("roboflow_agreement.png"), x: 0.6, y: 1.4, w: 5.0, h: 3.62 });
   ["photo", "my label", "LDSD's label"].forEach((t, i) => caption(s, 0.6 + i * 1.69, 5.05, 1.62, t, { size: 11, align: "center" }));
   s.addText(agreeMean !== undefined ? agreeMean.toFixed(2) : "—", { x: 0.6, y: 5.35, w: 1.7, h: 0.9, isTextBox: true,
@@ -556,6 +579,31 @@ const agreeMean = agreeRows ? agreeRows.reduce((a, r) => a + r.dice_vs_reference
     "Constant learning rate, 100 epochs: with only 6 validation photos the usual lr cut fired too early (first runs: 0.472 / 0.434)",
   ]), { x: 6.0, y: 4.65, w: 6.7, h: 1.8, isTextBox: true, fontSize: 13, color: C.text1, valign: "top", margin: 0, paraSpaceAfter: 6 });
   s.addNotes("Left: a close match and the worst disagreement between my labels and LDSD's. The agreement score is computed by src/roboflow_to_masks.py --compare. Right: every model is tested on the same 118 LDSD test photos, which were never used for training. The 470-photo rows are an upper reference: same photos source, 20 times more labelled data.");
+}
+
+// ------------------------------------------------------------------ future scope
+
+pres.addSection({ title: "Future Scope" });
+{
+  const s = content("Future scope", "Future Scope");
+  const cards = [
+    ["More and richer own data", [
+      "Label more leaf photos in Roboflow: 24 training photos are the main limit on the leaf result",
+      "Several classes (e.g. brown spot vs yellow blotch): needs a multi-channel output with softmax and a multi-channel memory; FANet as published is binary",
+    ]],
+    ["Closer to the paper", [
+      "Train with the paper's full protocol and several seeds, to tell the 0.038 Dice gap apart from run-to-run noise",
+      "Test on the paper's other polyp datasets (e.g. CVC-ClinicDB); we used one of seven",
+      "A separate validation split instead of choosing the checkpoint on test images",
+    ]],
+    ["Towards real use", [
+      "Video: use the previous frame's mask as the memory, so feedback comes free during a live colonoscopy",
+      "Train the soft gate (fmask head) the paper describes",
+      "Faster inference (mixed precision, smaller encoder) for real-time decision support",
+    ]],
+  ];
+  cards.forEach(([h, items], i) => card(s, 0.6 + i * 4.1, 1.45, 3.9, 4.95, h, bullets(items), { size: 13 }));
+  s.addNotes("Each point comes from a limit found in this project: few own photos, one class, the gap to the paper, one dataset of seven, checkpoint chosen on test. The video idea follows from how FANet works: in a video the previous frame already gives a mask.");
 }
 
 // ------------------------------------------------------------------ 14. conclusion

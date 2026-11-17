@@ -107,7 +107,7 @@ Say these six points in this order. Each one points to the chapter that backs it
   [Roboflow: project `leaf-disease-seg`, 30 photos labelled by hand, version v1 (126 images), export], [done, 7 Nov], [universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne; @ch-roboflow],
   [Hand labels checked against LDSD's masks], [done, 7 Nov], [mean Dice 0.730 over 30 photos],
   [Fine-tuned on the Roboflow set, tested on 118 LDSD photos], [done, 7 Nov], [0.517 from polyp weights, 0.467 from random weights (@sec-leaf-results)],
-  [PPT (17 slides, four on Roboflow)], [done, 7 Nov], [`presentation/FANet_ChaitanyaShinde_231070066.pptx`],
+  [PPT (19 slides, four on Roboflow; sections follow the brief: Problem Statement, Proposed System, Dataset Used, Result Analysis, Future Scope)], [done, 7 Nov], [`presentation/FANet_ChaitanyaShinde_231070066.pptx`],
   [Submission notebook with outputs], [done, re-run 7 Nov], [`notebooks/FANet_project.ipynb`],
   [First version sent to ma'am for review], [7 Nov], [package `FANet_ChaitanyaShinde_231070066.zip`],
 )

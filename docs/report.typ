@@ -54,7 +54,7 @@ The faculty brief asks for an individual project on object segmentation or detec
   [Implemented from scratch], [Every layer, the loss, training loop, metrics and refinement written with plain PyTorch primitives (@sec-impl).],
   [Paper's dataset], [Kvasir-SEG, the paper's 880/120 split ratio (@sec-setup).],
   [Own dataset in Roboflow], [30 real leaf photos labelled by hand, versioned and augmented in Roboflow (@sec-own).],
-  [PPT and notebook], [17-slide deck and an executed Jupyter notebook (@sec-deliv).],
+  [PPT and notebook], [19-slide deck and an executed Jupyter notebook (@sec-deliv).],
 )
 
 = Background
@@ -220,7 +220,7 @@ Future work: more hand-labelled leaf photos, a trainable soft gate for the fmask
 = Deliverables <sec-deliv>
 #table(columns: (auto, 1fr), stroke: 0.4pt, inset: 5pt,
   [Item], [Location in the submission package],
-  [Presentation (17 slides)], [`01_Presentation/` (PPTX and PDF)],
+  [Presentation (19 slides)], [`01_Presentation/` (PPTX and PDF)],
   [Notebook, executed with outputs], [`02_Notebook/FANet_project.ipynb` (and an HTML copy)],
   [Roboflow dataset], [`03_Roboflow_Dataset/`: exported zip, 11 screenshots of each step, label agreement CSV; public link above],
   [This report], [`04_Report/`],
