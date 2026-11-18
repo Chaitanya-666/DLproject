@@ -626,6 +626,10 @@ python -m src.train --data dataset/custom/roboflow_leaf --out runs/roboflow_leaf
   [Six validation photos give a noisy loss, so the plateau rule cut the rate too early. I fixed this rule before seeing test scores.],
 )
 
+=== 7.5 Detection dataset for the lab rule
+#says["The lab also asks for a Roboflow dataset with at least 200 annotated images and at least 4 classes … 220 tomato-leaf photos from PlantVillage, 55 from each of four classes … all 233 bounding boxes drawn by hand in Roboflow … split 176 train / 22 valid / 22 test … Total 572 images. Exported in YOLOv8 format."]
+#plain[Everything about it is explained under *Slide 14* in Part B (classes, 572 = 176 × 3 + 22 + 22, YOLOv8 format, likely questions). The report also shows two of your Roboflow screenshots (drawing a box; version v1).]
+
 == 8. Limitations
 #says["Each setting was trained once; differences of 0.01–0.02 Dice are within run-to-run noise." · "The Kvasir-SEG checkpoint was selected on the test images, as in the authors' code (slightly optimistic). The Roboflow models were selected on only 6 validation photos." · "Only one of the paper's seven datasets was used, and our 120 test images may differ from the paper's." · "The own dataset is small (30 photos) and its photos are public, not collected by us; only the labels are our own." · "Research and coursework only; not validated for clinical use."]
 #plain[

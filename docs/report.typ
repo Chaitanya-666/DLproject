@@ -28,7 +28,7 @@
     [Programme:], [B.Tech Computer Engineering, Semester VII, 2026–27],
     [Course:], [Deep Learning],
     [Base paper:], [N. K. Tomar et al., "FANet: A Feedback Attention Network for \ Improved Biomedical Image Segmentation," _IEEE Transactions on \ Neural Networks and Learning Systems_, vol. 34, no. 11, 2023],
-    [Date:], [7 November 2026],
+    [Date:], [18 November 2026],
   )
   #v(1.6cm)
   #block(width: 88%, inset: 12pt, stroke: 0.6pt + luma(160), radius: 3pt)[
@@ -102,6 +102,8 @@ For features $x$ of size $C times h times w$ and the previous mask $M$:
 + the two halves are concatenated.
 The plain half guarantees that a wrong previous mask cannot destroy the prediction; the network learns how much to trust each half.
 
+#fig("../presentation/assets/report_slide-07.png", [MixPool as drawn on slide 7: the fmask head and the max-pooled previous mask are combined with OR into the attention map; one half of the channels sees only the attended region, the other half sees everything.], w: 82%)
+
 == Training with a feedback memory, and testing with refinement
 Before the first epoch the memory holds the Otsu mask of every training image. In each epoch, image $i$ is passed with `memory[i]`, the loss ($0.5 dot "BCE" + 0.5 dot "Dice"$) is minimised with Adam, and the thresholded prediction is staged. Only when the validation loss improves does the staged copy replace the memory, so the memory always comes from the best model so far. The ground truth is never an input.
 
@@ -126,6 +128,8 @@ Everything is written in PyTorch from basic layers (`Conv2d`, `BatchNorm2d`, `Co
 
 = Experimental setup <sec-setup>
 *Dataset.* Kvasir-SEG [2]: 1000 colonoscopy images with polyp masks drawn by doctors. Split 880 train / 120 test with a fixed seed, the paper's ratio. Images resized to 256×256 (the size used in the authors' code; the paper's text uses 512×512, which we also run).
+
+#fig("../presentation/assets/kvasir_example.png", [A Kvasir-SEG image, its ground-truth mask drawn by doctors, and the mask overlaid.], w: 70%)
 
 *Training.* Adam, learning rate $10^(-4)$, ReduceLROnPlateau (factor 0.1, patience 5), batch 8, official augmentation. Hardware: RTX 5050 laptop GPU (8 GB); extra runs on Kaggle T4/P100. The final run stopped at epoch 147; the best checkpoint is from epoch 107.
 
@@ -154,6 +158,8 @@ Under the paper's protocol our reproduction is 0.038 Dice below the paper. Train
 
 #fig("../presentation/assets/strip_kvasir_official.png", [Three test images. Columns: image, ground truth, Otsu start, round 1, round 2, round 10.], w: 85%)
 
+#fig("../presentation/figures/learning_curves.png", [Learning curves of the main run (`runs/kvasir_official/log.csv`): training and test loss (left), and test Dice per epoch with the no-feedback ablation on the same axes (right).], w: 88%)
+
 == Detection view <sec-detect>
 Bounding boxes are drawn around each connected blob of the predicted mask and matched to the ground-truth boxes at IoU ≥ 0.5. Under the paper's protocol, box precision is 0.685 and box recall 0.800 (mean matched IoU 0.881); from an empty start, 0.836 and 0.896.
 
@@ -161,6 +167,8 @@ Bounding boxes are drawn around each connected blob of the predicted mask and ma
 *The feedback adds little in our reproduction.* With the memory fixed at zeros (no feedback), the same network reaches 0.883: above our FANet under the paper's protocol and 0.017 below our best setting. The paper reports a larger gain (0.852 → 0.880) than we could reproduce.
 
 *The unaligned memory acts as a regulariser.* The official code rotates and flips each image but not its memory mask, so for about two-thirds of training samples the memory points at the wrong place. Our first run "fixed" this by moving the memory with the image. That model learned to copy its memory: probed with one pass from different starting masks, it scored 0.517 from an empty mask and 0.383 from an all-ones mask, while the model trained the official way scored 0.828 and 0.518. Forcing the network to check the memory against the image is what makes an empty start work.
+
+#fig("../presentation/assets/report_slide-17.png", [The aligned-memory finding as shown on slide 17: one-pass Dice from different starting masks for the aligned (first) run and the official run.], w: 82%)
 
 *Part of MixPool never trains.* The fmask head is thresholded with a step function, which has zero gradient, so 982,088 parameters (about 13% of the model) keep their random initial values. A soft (sigmoid) gate or a straight-through estimator would fix this.
 
@@ -214,6 +222,10 @@ The lab also asks for a Roboflow dataset with at least 200 annotated images and 
 The dataset is public at #link("https://universe.roboflow.com/chaitanyadl/tomato-leaf-disease-det/dataset/1")[universe.roboflow.com/chaitanyadl/tomato-leaf-disease-det]. Training a detector on it is future work.
 
 #fig("../presentation/assets/roboflow_det_grid.png", [One held-out photo per class from the exported detection dataset, with the hand-drawn box.], w: 55%)
+#grid(columns: (1fr, 1fr), gutter: 8pt,
+  image("../presentation/assets/roboflow_det/editor_bacterial_spot.png"),
+  image("../presentation/assets/roboflow_det/version_v1_572.png"))
+#align(center, text(9pt)[Screenshots from Roboflow: drawing a box with the four classes (left); version v1 with 572 images, its split, preprocessing and augmentation (right).])
 
 = Limitations
 - Each setting was trained once; differences of 0.01–0.02 Dice are within run-to-run noise.
@@ -228,7 +240,7 @@ FANet was implemented from scratch and reproduced on Kvasir-SEG: Dice 0.842 unde
 Future work: more hand-labelled leaf photos, a detector trained on the tomato-leaf set, a trainable soft gate for the fmask head, repeated runs with different seeds, and video, where the previous frame's mask is a natural feedback input.
 
 = Deliverables <sec-deliv>
-#table(columns: (auto, 1fr), stroke: 0.4pt, inset: 5pt,
+#block(breakable: false)[#table(columns: (auto, 1fr), stroke: 0.4pt, inset: 5pt,
   [Item], [Location in the submission package],
   [Presentation (20 slides)], [`01_Presentation/` (PPTX and PDF)],
   [Notebook, executed with outputs], [`02_Notebook/FANet_project.ipynb` (and an HTML copy)],
@@ -236,7 +248,7 @@ Future work: more hand-labelled leaf photos, a detector trained on the tomato-le
   [This report], [`04_Report/`],
   [Source code and result tables], [`05_Code/`: `src/`, `README.md` (full documentation and commands), `results/` (every CSV behind the numbers)],
   [Trained weights], [published separately (link in the package README)],
-)
+)]
 
 = References
 #set text(size: 10pt)
