@@ -37,7 +37,7 @@
 ]
 #block(width: 100%, inset: 9pt, stroke: 0.6pt + rgb("#1f6f78"), radius: 3pt)[
   *How to use it.* Read §1–§9 once, in order (about 2 hours). Say every green box out loud. Run the demo (§10) once on your laptop tonight, and open each file in the code map (§11) once so you know where things are. Read the cheat sheet on the last page tomorrow morning and again before you walk in.
-  The older guides (Exam Guide, OneShot) go deeper; you only need them to look something up.
+  The only other guide is the *Exam Guide* (38 pp): it walks your report section by section and all 20 slides. Use it to go deeper on any slide.
 ]
 #outline(depth: 1, title: none)
 
