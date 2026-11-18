@@ -36,7 +36,7 @@
   Chaitanya Shinde · 231070066
 ]
 #block(width: 100%, inset: 9pt, stroke: 0.6pt + rgb("#1f6f78"), radius: 3pt)[
-  *How to use it.* Read §1–§9 once, in order (about 2 hours). Say every green box out loud. Run the demo (§10) once on your laptop tonight. Read the cheat sheet on the last page tomorrow morning and again before you walk in.
+  *How to use it.* Read §1–§9 once, in order (about 2 hours). Say every green box out loud. Run the demo (§10) once on your laptop tonight, and open each file in the code map (§11) once so you know where things are. Read the cheat sheet on the last page tomorrow morning and again before you walk in.
   The older guides (Exam Guide, OneShot) go deeper; you only need them to look something up.
 ]
 #outline(depth: 1, title: none)
@@ -301,7 +301,38 @@ What happens inside (say this while it runs): the script loads the trained weigh
 )
 
 // =====================================================================
-= 11. Rapid-fire questions
+= 11. "Where is it?": the code map
+
+*Plain Python or notebook?* Both. All the real code is plain Python modules in `src/` (run as `python -m src.train`, `python -m src.evaluate`). The *submission notebook* `notebooks/FANet_project.ipynb` (29 cells, already executed, outputs saved) *imports* those modules and walks through the project: data → model → MixPool source → Otsu → a short live training demo → refinement → results vs the paper → detection view → leaf transfer → conclusion. Training for hours happened with the scripts; the notebook loads the saved checkpoints.
+#say["The code is a Python package, `src/`, so the same functions are used by the training script, the test script and the notebook. The notebook is the guided tour with outputs."]
+
+#table(columns: (1fr, auto),
+  [If ma'am asks to see…], [Open this (file:line)],
+  [The whole model (U-Net, 4 down + 4 up)], [`src/model.py:56` `class FANet`; forward at `:72`],
+  [Encoder / decoder stage], [`src/model.py:27` / `:41`],
+  [MixPool (the paper's block)], [`src/blocks.py:67`; fmask threshold `:110`; *OR* `:113`; concat `:116`],
+  [Residual block / SE], [`src/blocks.py:38` / `:12`],
+  [Otsu first guess], [`src/memory.py:17` (`otsu_threshold`), `:31` (`otsu_mask`)],
+  [Feedback memory (stage / commit)], [`src/memory.py:39`; stage `:60`, commit `:66`],
+  [Memory updated only when val loss improves], [`src/train.py:189` (`commit()` after a better epoch)],
+  [Loss: 0.5 BCE + 0.5 Dice], [`src/losses.py:14` (Dice loss), `:21` (`DiceBCELoss`)],
+  [Training loop (forward, loss, backward)], [`src/train.py:54` `run_epoch`; loss `:88`, `backward` `:96`],
+  [Optimizer Adam + lr schedule], [`src/train.py:165`, `:167`; `scheduler.step` `:185`],
+  [Augmentation (rotate ±35°, flips, cut-out)], [`src/augment.py:78` (official), `:59` (brightness, holes)],
+  [Checkpoint saved], [`src/train.py:193` (`torch.save`)],
+  [*Dice, IoU, precision, recall, F2 computed*], [`src/metrics.py:27` `mask_scores` (TP/FP/FN at `:31–33`, Dice `:38`)],
+  [Average over test images], [`src/metrics.py:48` `MetricAverager`],
+  [Boxes from masks + box IoU], [`src/metrics.py:91` `mask_to_boxes`, `:102` `box_iou`, `:111` `BoxAverager`],
+  [10-round refinement at test time], [`src/evaluate.py:95` (loop), `:108` (prediction written back)],
+  [Image / mask loading, resize, threshold 127], [`src/dataset.py:59`, `:64`, `:85`],
+  [Roboflow export → masks + label agreement], [`src/roboflow_to_masks.py:90`],
+  [Detection dataset figure + counts], [`presentation/make_det_assets.py`],
+  [Parameter count (7.72 M)], [`src/model.py:91`; run `python -m src.model`],
+  [Live demo script], [`demo.sh` (calls `src/evaluate.py`)],
+)
+
+// =====================================================================
+= 12. Rapid-fire questions
 
 #qa(
   [Why segmentation and not classification?], [The brief forbids classification, and a mask gives location, size and edges, which a yes/no label can't.],
@@ -366,7 +397,7 @@ What happens inside (say this while it runs): the script loads the trained weigh
 
 *Roboflow det (slide 14):* 220 PlantVillage tomato leaves, *4 classes × 55* (bacterial spot, early blight, late blight, healthy), my 233 boxes, 176/22/22, 3× → *572*, YOLOv8 export.
 
-*Demo:* `./demo.sh polyp 4` · `leaf 4` · `test`.
+*Demo:* `./demo.sh polyp 4` · `leaf 4` · `test`. *Code:* plain Python in `src/`; the notebook imports it. Dice in `metrics.py:27`, MixPool `blocks.py:67`, refinement `evaluate.py:95`.
 
 *Limits:* −0.04 vs paper, 1 run each, fmask gets no gradient (13% params).
 ],
