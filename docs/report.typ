@@ -34,7 +34,7 @@
   #block(width: 88%, inset: 12pt, stroke: 0.6pt + luma(160), radius: 3pt)[
     #set align(left)
     #set par(justify: true)
-    *Abstract.* We implement FANet, a feedback-attention encoder–decoder for biomedical image segmentation, from scratch in PyTorch (no pretrained weights, no model libraries) and reproduce it on the paper's dataset, Kvasir-SEG. Under the paper's test protocol (ten rounds of iterative refinement starting from an Otsu mask) our model reaches a Dice coefficient of *0.842* at 256×256, against 0.880 reported at 512×512; starting the refinement from an empty mask gives *0.900*. Additional experiments show that a 512×512 run does not close the gap (0.831), that a no-feedback ablation reaches 0.883, and that the official code's unaligned memory acts as a regulariser. For the own-dataset requirement we built a semantic-segmentation dataset in Roboflow: 30 real leaf photos whose disease spots were labelled by hand, split 24/6 and augmented five times. The hand labels agree with the source dataset's masks at Dice 0.730. Fine-tuned from the polyp weights, FANet reaches Dice *0.517* on 118 held-out leaf photos, against 0.467 when trained from random weights.
+    *Abstract.* We implement FANet, a feedback-attention encoder–decoder for biomedical image segmentation, from scratch in PyTorch (no pretrained weights, no model libraries) and reproduce it on the paper's dataset, Kvasir-SEG. Under the paper's test protocol (ten rounds of iterative refinement starting from an Otsu mask) our model reaches a Dice coefficient of *0.842* at 256×256, against 0.880 reported at 512×512; starting the refinement from an empty mask gives *0.900*. Additional experiments show that a 512×512 run does not close the gap (0.831), that a no-feedback ablation reaches 0.883, and that the official code's unaligned memory acts as a regulariser. For the own-dataset requirement we built a semantic-segmentation dataset in Roboflow: 30 real leaf photos whose disease spots were labelled by hand, split 24/6 and augmented five times. The hand labels agree with the source dataset's masks at Dice 0.730. Fine-tuned from the polyp weights, FANet reaches Dice *0.517* on 118 held-out leaf photos, against 0.467 when trained from random weights. For the lab's dataset rule we also built a 4-class detection set in Roboflow: 220 tomato-leaf photos, hand-drawn boxes, 572 images after augmentation.
   ]
 ]
 
@@ -53,8 +53,8 @@ The faculty brief asks for an individual project on object segmentation or detec
   [IEEE paper, last 5 years], [IEEE TNNLS, vol. 34, no. 11, 2023 (online 2022).],
   [Implemented from scratch], [Every layer, the loss, training loop, metrics and refinement written with plain PyTorch primitives (@sec-impl).],
   [Paper's dataset], [Kvasir-SEG, the paper's 880/120 split ratio (@sec-setup).],
-  [Own dataset in Roboflow], [30 real leaf photos labelled by hand, versioned and augmented in Roboflow (@sec-own).],
-  [PPT and notebook], [19-slide deck and an executed Jupyter notebook (@sec-deliv).],
+  [Own dataset in Roboflow], [30 real leaf photos labelled by hand, versioned and augmented in Roboflow (@sec-own); plus a 4-class detection set of 220 hand-boxed tomato-leaf photos for the lab rule.],
+  [PPT and notebook], [20-slide deck and an executed Jupyter notebook (@sec-deliv).],
 )
 
 = Background
@@ -205,6 +205,16 @@ Without fine-tuning the polyp model finds almost nothing on leaves, a clear doma
 
 *Learning-rate schedule.* The Roboflow models are trained for 100 epochs at a constant learning rate. With the default schedule (rate ×0.1 whenever the validation loss stalls for 5 epochs), the 6 noisy validation photos cut the rate to almost zero within 30 epochs and both models scored about 0.04 lower (last row). This choice was fixed before looking at the test scores. Part of the remaining gap is the label definition: the model learns our definition of a spot but is scored against LDSD's, and the two agree only at 0.730.
 
+== Detection dataset for the lab rule
+The lab also asks for a Roboflow dataset with at least 200 annotated images and at least 4 classes, for detection or segmentation. FANet is binary, so we built a separate *Object Detection* dataset; FANet stays the main project.
++ *Photos:* 220 tomato-leaf photos from PlantVillage [14], 55 from each of four classes: *bacterial spot, early blight, late blight, healthy*. The class of each photo is PlantVillage's expert label (we took every 15th photo of each class folder).
++ *Annotation:* all 233 bounding boxes drawn by hand in Roboflow: one box around the leaf, and on late blight around the blighted regions.
++ *Version v1:* split 176 train / 22 valid / 22 test; Auto-Orient; resize (stretch) to 640×640; horizontal and vertical flips, rotation ±15°, brightness ±15%, three outputs per training photo. Total 572 images. Exported in YOLOv8 format (one text file per image, one line per box: class, centre x, centre y, width, height, normalised to 0–1).
+
+The dataset is public at #link("https://universe.roboflow.com/chaitanyadl/tomato-leaf-disease-det/dataset/1")[universe.roboflow.com/chaitanyadl/tomato-leaf-disease-det]. Training a detector on it is future work.
+
+#fig("../presentation/assets/roboflow_det_grid.png", [One held-out photo per class from the exported detection dataset, with the hand-drawn box.], w: 55%)
+
 = Limitations
 - Each setting was trained once; differences of 0.01–0.02 Dice are within run-to-run noise.
 - The Kvasir-SEG checkpoint was selected on the test images, as in the authors' code (slightly optimistic). The Roboflow models were selected on only 6 validation photos.
@@ -213,16 +223,16 @@ Without fine-tuning the polyp model finds almost nothing on leaves, a clear doma
 - Research and coursework only; not validated for clinical use.
 
 = Conclusion and future work
-FANet was implemented from scratch and reproduced on Kvasir-SEG: Dice 0.842 under the paper's protocol (paper 0.880) and 0.900 with an empty starting mask. The experiments show that resolution does not explain the gap, that the feedback memory contributes less than reported, that the official unaligned memory works as a regulariser, and that 13% of the parameters never train. A semantic-segmentation dataset of 30 hand-labelled leaf photos was built and augmented in Roboflow, and the polyp model transferred to it (0.517 Dice on 118 unseen photos, against 0.467 when trained from scratch).
+FANet was implemented from scratch and reproduced on Kvasir-SEG: Dice 0.842 under the paper's protocol (paper 0.880) and 0.900 with an empty starting mask. The experiments show that resolution does not explain the gap, that the feedback memory contributes less than reported, that the official unaligned memory works as a regulariser, and that 13% of the parameters never train. A semantic-segmentation dataset of 30 hand-labelled leaf photos was built and augmented in Roboflow, and the polyp model transferred to it (0.517 Dice on 118 unseen photos, against 0.467 when trained from scratch). A separate 4-class detection dataset of 220 hand-boxed tomato-leaf photos meets the lab's Roboflow rule.
 
-Future work: more hand-labelled leaf photos, a trainable soft gate for the fmask head, repeated runs with different seeds, and video, where the previous frame's mask is a natural feedback input.
+Future work: more hand-labelled leaf photos, a detector trained on the tomato-leaf set, a trainable soft gate for the fmask head, repeated runs with different seeds, and video, where the previous frame's mask is a natural feedback input.
 
 = Deliverables <sec-deliv>
 #table(columns: (auto, 1fr), stroke: 0.4pt, inset: 5pt,
   [Item], [Location in the submission package],
-  [Presentation (19 slides)], [`01_Presentation/` (PPTX and PDF)],
+  [Presentation (20 slides)], [`01_Presentation/` (PPTX and PDF)],
   [Notebook, executed with outputs], [`02_Notebook/FANet_project.ipynb` (and an HTML copy)],
-  [Roboflow dataset], [`03_Roboflow_Dataset/`: exported zip, 11 screenshots of each step, label agreement CSV; public link above],
+  [Roboflow dataset], [`03_Roboflow_Dataset/`: segmentation export, 11 screenshots of each step, label agreement CSV; `detection_tomato/`: YOLOv8 export and screenshots; public links above],
   [This report], [`04_Report/`],
   [Source code and result tables], [`05_Code/`: `src/`, `README.md` (full documentation and commands), `results/` (every CSV behind the numbers)],
   [Trained weights], [published separately (link in the package README)],
@@ -243,3 +253,4 @@ Future work: more hand-labelled leaf photos, a trainable soft gate for the fmask
 + D. Singh et al., "PlantDoc: A Dataset for Visual Plant Disease Detection," CoDS-COMAD 2020.
 + F. Alam, "Leaf disease segmentation dataset," Kaggle, 2021 (CC0).
 + Roboflow documentation: dataset versions, augmentation and export. docs.roboflow.com.
++ D. P. Hughes, M. Salathé, "An open access repository of images on plant health to enable the development of mobile disease diagnostics," arXiv:1511.08060, 2015 (PlantVillage).

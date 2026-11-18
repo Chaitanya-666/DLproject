@@ -148,7 +148,7 @@ pres.addSection({ title: "Problem Statement" });
   const parts = [
     ["1", "Problem Statement", "Missed polyps in colonoscopy; why pixel-level segmentation"],
     ["2", "Proposed System", "FANet: a U-Net that feeds its previous mask back in; built from scratch in PyTorch"],
-    ["3", "Dataset Used", "Kvasir-SEG (the paper's dataset) and my own leaf-disease dataset labelled in Roboflow"],
+    ["3", "Dataset Used", "Kvasir-SEG (the paper's dataset), my leaf-disease masks and a 4-class tomato-leaf detection set, both labelled in Roboflow"],
     ["4", "Result Analysis", "Dice vs the paper, refinement rounds, ablation, transfer to real leaves"],
     ["5", "Future Scope", "More own data, the paper's full protocol, video, multi-class"],
   ];
@@ -444,6 +444,29 @@ const agreeMean = agreeRows ? agreeRows.reduce((a, r) => a + r.dice_vs_reference
   s.addNotes("Exported in Roboflow's Semantic Segmentation Masks format: each mask pixel holds a class number (0 background, 1 disease). src/roboflow_to_masks.py converts it to our images/ + masks/ layout and keeps Roboflow's train/valid split, so the checkpoint is chosen on Roboflow's validation photos, never on the test photos.");
 }
 
+// Roboflow detection dataset (lab rule: >= 200 annotated images, >= 4 classes). Counts come from
+// presentation/make_det_assets.py, which reads the YOLOv8 export.
+if (fs.existsSync(asset("roboflow_det_stats.json"))) {
+  const st = JSON.parse(fs.readFileSync(asset("roboflow_det_stats.json"), "utf8"));
+  const sp = st.splits;
+  const nOrig = st.original_images;
+  const s = content(`Roboflow detection dataset: ${nOrig} tomato leaves, ${st.classes.length} classes`, "Dataset Used");
+  s.addImage({ path: asset("roboflow_det_grid.png"), x: 0.6, y: 1.35, w: 4.6, h: 5.06 });
+  caption(s, 0.6, 6.5, 4.6, "One held-out photo per class with my bounding box (from the export)", { size: 11 });
+  const perClass = st.classes.map((c) => `${c}: ${st.originals_per_class[c] || 0}`).join(" · ");
+  card(s, 5.5, 1.35, 7.2, 2.45, "What it is", bullets([
+    `${nOrig} photos from PlantVillage (Hughes & Salathé, 2015), ${st.classes.length} classes: ${perClass}`,
+    `Object Detection project in Roboflow: I drew all ${Object.values(st.boxes_on_originals).reduce((a, b) => a + b, 0)} boxes by hand (whole leaf; on late blight, the blighted regions)`,
+    "Separate from FANet: it meets the lab's dataset rule (≥ 200 annotated images, ≥ 4 classes)",
+  ]), { size: 13 });
+  card(s, 5.5, 4.0, 7.2, 2.4, "Version and export", bullets([
+    `Split ${sp.train.originals} train / ${sp.valid.originals} valid / ${sp.test.originals} test photos`,
+    `Auto-Orient, resize 640×640; flips, ±15° rotation, ±15% brightness, 3× on train → ${st.total_images} images`,
+    "Exported in YOLOv8 format: one .txt per image, a line per box: class, centre x, centre y, width, height (0–1)",
+  ]), { size: 13 });
+  s.addNotes("Public on Roboflow Universe: " + (st.universe || "") + ". This is the lab's Roboflow dataset requirement. Classes: bacterial spot (many tiny dark specks), early blight (brown spots with target-like rings), late blight (large irregular greasy dark patches), healthy. The class of each photo comes from PlantVillage's expert labels; I localised every leaf with a box in Roboflow. Next step would be training a detector such as YOLO on it.");
+}
+
 // ------------------------------------------------------------------ 10. results table
 
 pres.addSection({ title: "Result Analysis" });
@@ -589,6 +612,7 @@ pres.addSection({ title: "Future Scope" });
   const cards = [
     ["More and richer own data", [
       "Label more leaf photos in Roboflow: 24 training photos are the main limit on the leaf result",
+      "Train a detector (e.g. YOLO) on my 4-class tomato-leaf detection set",
       "Several classes (e.g. brown spot vs yellow blotch): needs a multi-channel output with softmax and a multi-channel memory; FANet as published is binary",
     ]],
     ["Closer to the paper", [

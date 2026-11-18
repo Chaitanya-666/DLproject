@@ -218,10 +218,11 @@ With the official (misaligned) behaviour, the memory is often wrong during train
 
 == 7.3 My Roboflow detection dataset (tomato leaves, 4 classes)
 Made for the lab's dataset rule (*≥ 200 annotated images, ≥ 4 classes, detection or segmentation*). It is separate from FANet; FANet stays the main project.
-- *Photos:* 220 tomato-leaf photos from *PlantVillage* (Hughes & Salathé, 2015), 55 per class.
+- *Photos:* 220 tomato-leaf photos from *PlantVillage* (Hughes & Salathé, 2015), 55 per class (every 15th photo of each class folder, renamed `<class>_01.jpg` … `_55.jpg`).
 - *Classes:* `bacterial_spot` (many tiny dark specks), `early_blight` (brown spots with *target-like rings*), `late_blight` (large irregular greasy dark patches, no rings), `healthy`.
-- *Annotation:* Object Detection project in Roboflow; *I drew one bounding box per leaf* and chose its class.
-- *Version:* split 80 / 10 / 10; Auto-Orient, resize 640×640; flips, ±15° rotation, ±15% brightness; 3× augmentation; exported in YOLOv8 format.
+- *Annotation:* Object Detection project `tomato-leaf-disease-det` in Roboflow. *I drew all 233 boxes by hand*: one around the whole leaf; on late blight, around the blighted regions. The class is PlantVillage's expert label (the folder).
+- *Version v1:* split *176 / 22 / 22* (80/10/10); Auto-Orient, resize 640×640; flips, ±15° rotation, ±15% brightness; *3× on train → 572 images* ($176 times 3 + 22 + 22$); exported in *YOLOv8* format. Public on Roboflow Universe.
+- On the deck: *slide 14*. Not trained yet (future scope: train a YOLO detector on it).
 
 #qa(
   [Why are augmented images not "more annotated images"?], [They are copies of the same photos with flips/rotations; the labels move with them automatically. The 220 originals are the annotated images.],
@@ -363,7 +364,7 @@ What happens inside (say this while it runs): the script loads the trained weigh
 
 *Roboflow seg:* 30 LDSD photos, hand polygons, 24/6, 5× aug → 126, labels agree 0.730.
 
-*Roboflow det:* 220 PlantVillage tomato leaves, *4 classes* (bacterial spot, early blight, late blight, healthy), my boxes, 80/10/10, 3× aug, YOLOv8 export.
+*Roboflow det (slide 14):* 220 PlantVillage tomato leaves, *4 classes × 55* (bacterial spot, early blight, late blight, healthy), my 233 boxes, 176/22/22, 3× → *572*, YOLOv8 export.
 
 *Demo:* `./demo.sh polyp 4` · `leaf 4` · `test`.
 

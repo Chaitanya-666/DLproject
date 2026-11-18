@@ -1,5 +1,5 @@
-// FANet exam guide: follows docs/report.typ (Part A) and the 19 slides (Part B).
-// Quotes are copied from DLproject/docs/report.typ and presentation/build_deck.js (deck: commit aeede79, 19 slides).
+// FANet exam guide: follows docs/report.typ (Part A) and the 20 slides (Part B).
+// Quotes are copied from DLproject/docs/report.typ and presentation/build_deck.js (deck: 20 slides, 18 Nov).
 // Theory citations point to the student's revision notes in
 // collegestuff/sem07/DeepLearning/guides/ (Ch4, Ch5, Master Revision Guide).
 #set document(title: "FANet exam guide", author: "Chaitanya Shinde")
@@ -50,7 +50,7 @@
   *Why this guide looks like this.* Ma'am will open your *report* and your *slides* and ask about anything in them. So this guide follows them exactly:
   - *Part 0* starts from zero: the story, the pipeline, the words, the repo, how to run it.
   - *Part A* walks through `docs/report.typ` in its own order, with its own headings.
-  - *Part B* walks through the 19 slides in order.
+  - *Part B* walks through the 20 slides in order.
   - *Part C* lists the few places where the report, the slides and the logs disagree, and what to say.
   - *Part D* is a one-page cheat sheet.
 
@@ -84,7 +84,7 @@
 #figure(image("figures/kvasir_example.png", width: 80%),
   caption: [Input and target. Left: a Kvasir-SEG test image (the input). Middle: its ground-truth mask, drawn by a doctor (white = polyp). Right: the mask over the image. From `presentation/assets/kvasir_example.png`.])
 #figure(image("figures/strip_kvasir_official.png", width: 100%),
-  caption: [What your model does on three test images. Columns: image | ground truth | Otsu start | round 1 | round 2 | round 10. The *last column is your final prediction* (blue overlay). From `presentation/assets/strip_kvasir_official.png` (slide 15, report Fig.).])
+  caption: [What your model does on three test images. Columns: image | ground truth | Otsu start | round 1 | round 2 | round 10. The *last column is your final prediction* (blue overlay). From `presentation/assets/strip_kvasir_official.png` (slide 16, report Fig.).])
 
 == 0.2 The pipeline, end to end
 Thirteen steps from raw data to your report. Each row: what happens, and where.
@@ -184,7 +184,7 @@ The full training command was `python -m src.train --data data/Kvasir-SEG --out 
 #table(columns: (auto, 1fr),
   [When], [What to read],
   [Tonight (Tue 17 Nov)], [Part 0 (this part) slowly, then Part A, report section by section. Say each "Ma'am may ask" answer out loud.],
-  [Wednesday 18 Nov], [Part B: present all 19 slides out loud once, using the "Your slide says" box as your script. Then Part C twice.],
+  [Wednesday 18 Nov], [Part B: present all 20 slides out loud once, using the "Your slide says" box as your script. Then Part C twice.],
   [Thursday morning], [Part D (cheat sheet) and the five code files in 0.4.],
 )
 
@@ -652,7 +652,7 @@ python -m src.train --data dataset/custom/roboflow_leaf --out runs/roboflow_leaf
 )
 
 == 10. Deliverables
-#says["Presentation (19 slides): `01_Presentation/` (PPTX and PDF)" · "Notebook, executed with outputs: `02_Notebook/FANet_project.ipynb` (and an HTML copy)" · "Roboflow dataset: `03_Roboflow_Dataset/`: exported zip, 11 screenshots of each step, label agreement CSV; public link above" · "This report: `04_Report/`" · "Source code and result tables: `05_Code/`" · "Trained weights: published separately (link in the package README)"]
+#says["Presentation (20 slides): `01_Presentation/` (PPTX and PDF)" · "Notebook, executed with outputs: `02_Notebook/FANet_project.ipynb` (and an HTML copy)" · "Roboflow dataset: `03_Roboflow_Dataset/`: exported zip, 11 screenshots of each step, label agreement CSV; public link above" · "This report: `04_Report/`" · "Source code and result tables: `05_Code/`" · "Trained weights: published separately (link in the package README)"]
 #plain[
 - The Roboflow dataset is public at `universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne`.
 - The weights are on Hugging Face: `huggingface.co/Ckorion/fanet-polyp-leaf-from-scratch`.
@@ -678,19 +678,19 @@ python -m src.train --data dataset/custom/roboflow_leaf --out runs/roboflow_leaf
 #let secbar(name, range) = block(width: 100%, fill: rgb("#0e3b43"), inset: (x: 9pt, y: 5pt), radius: 2pt, above: 1em, below: 0.6em, breakable: false, sticky: true,
   text(font: "Inter", size: 9pt, weight: "bold", fill: white)[#upper(name) #h(1fr) #range])
 
-The deck has *19 slides* in the five sections of ma'am's PPT brief (17 Nov): *Problem Statement, Proposed System, Dataset Used, Result Analysis, Future Scope*, then the Conclusion. The section name is printed in small capitals at the top of each slide. For theory, each slide points back to the matching Part A unit.
+The deck has *20 slides* in the five sections of ma'am's PPT brief (17 Nov): *Problem Statement, Proposed System, Dataset Used, Result Analysis, Future Scope*, then the Conclusion. The section name is printed in small capitals at the top of each slide. For theory, each slide points back to the matching Part A unit.
 
 #table(columns: (auto, auto, 1fr),
   [Section], [Slides], [What you are showing],
   [Title], [1], [Task, method, your name],
   [Problem Statement], [2–4], [Outline; why missed polyps matter; why pixel-level segmentation],
   [Proposed System], [5–9], [FANet's idea, architecture, MixPool, the feedback loop, your from-scratch code],
-  [Dataset Used], [10–13], [Kvasir-SEG setup; your Roboflow leaf dataset (3 slides)],
+  [Dataset Used], [10–14], [Kvasir-SEG setup; your Roboflow leaf dataset (3 slides); the 4-class tomato detection set (1 slide)],
   [Result Analysis], [14–17], [Kvasir results, refinement, the aligned-memory finding, leaf results],
   [Future Scope], [18], [Next steps, each tied to a limit you found],
   [Conclusion], [19], [Works, limits, next],
 )
-#note[If you rehearsed from an older copy: the Roboflow slides now come *before* the results (11–13), and slides 2 (Outline) and 18 (Future scope) are new.]
+#note[If you rehearsed from an older copy: the Roboflow slides now come *before* the results (11–13), and slides 2 (Outline) and 19 (Future scope) are new.]
 
 == Slide 1: Polyp Segmentation with FANet
 #thumb(1)
@@ -774,7 +774,7 @@ The deck has *19 slides* in the five sections of ma'am's PPT brief (17 Nov): *Pr
 ]
 #ask([Where is MixPool?], [`src/blocks.py`, class `MixPool`, lines 109 to 116.], [Where is the refinement loop?], [`src/evaluate.py`, lines 95 to 120.])
 
-#secbar("Dataset Used", "slides 10–13")
+#secbar("Dataset Used", "slides 10–14")
 
 == Slide 10: Setup: Kvasir-SEG with the paper's 880 / 120 split
 #thumb(10)
@@ -805,25 +805,40 @@ Table (Paper | Authors' code | This project): Input "512×512" | "256×256" | "2
 ]
 #ask([Does stretching distort the image?], [Yes, the shape changes, but image and mask stretch together, so the labels stay aligned.])
 
-#secbar("Result Analysis", "slides 14–17")
-
-== Slide 14: Results on the 120 Kvasir-SEG test images
+== Slide 14: Roboflow detection dataset: 220 tomato leaves, 4 classes
 #thumb(14)
+#slidesays["220 photos from PlantVillage (Hughes & Salathé, 2015), 4 classes: bacterial_spot: 55 · early_blight: 55 · healthy: 55 · late_blight: 55" · "Object Detection project in Roboflow: I drew all 233 boxes by hand (whole leaf; on late blight, the blighted regions)" · "Separate from FANet: it meets the lab's dataset rule (≥ 200 annotated images, ≥ 4 classes)" · "Split 176 train / 22 valid / 22 test photos" · "Auto-Orient, resize 640×640; flips, ±15° rotation, ±15% brightness, 3× on train → 572 images" · "Exported in YOLOv8 format"]
+#plain[
+- *Why it exists:* the lab rule asks for a Roboflow dataset with at least 200 annotated images and at least 4 classes. FANet is binary (polyp or not), so this set is separate; FANet stays the main project.
+- *Detection, not segmentation:* a box + a class per object. The class of each photo comes from PlantVillage's expert-labelled folders; I localised each leaf with a box.
+- *The four classes:* bacterial spot (many tiny dark specks), early blight (brown spots with target-like rings), late blight (large irregular greasy dark patches), healthy. "Early" and "late" name two different pathogens, not stages.
+- *572 = 176 × 3 + 22 + 22:* augmentation only multiplies the training photos; validation and test stay real.
+- *YOLOv8 format:* one `.txt` per image, one line per box: class id, box centre x, centre y, width, height, all scaled to 0–1.
+- Public on Roboflow Universe: `universe.roboflow.com/chaitanyadl/tomato-leaf-disease-det`.
+]
+#ask([Why are some late-blight boxes smaller than the leaf?], [For late blight I boxed the blighted regions, where the class is visible; for the other classes the whole leaf. A next version would make this one rule for all classes.],
+  [Did you train a model on it?], [Not yet: it is listed under future scope (train a detector such as YOLO). The brief asked for the annotated dataset.],
+  [How many annotated images, really?], [220 hand-annotated photos (55 per class). The 572 includes augmented copies, which are not new annotations.])
+
+#secbar("Result Analysis", "slides 15–18")
+
+== Slide 15: Results on the 120 Kvasir-SEG test images
+#thumb(15)
 #slidesays[Rows (Dice, mIoU, Recall, Precision, F2): "FANet, paper: 0.880, 0.815, 0.906, 0.900, 0.887" · "FANet, ours, official protocol: 0.842, 0.779, 0.934, 0.835, 0.868" · "FANet, ours, round 1: 0.615, 0.512, 0.965, 0.530, 0.729" · "FANet, ours, empty start: 0.900, 0.841, 0.900, 0.935, 0.898" · "FANet, ours, 512×512: 0.831, 0.758, 0.917, 0.831, 0.860" · "No feedback (ablation): 0.883, 0.817, 0.897, 0.915, 0.886" · "Aligned memory (our first run): 0.684, 0.589, 0.958, 0.619, 0.775" \
 "Ablation: without feedback the same network scores 0.883, above FANet from Otsu (0.842); the memory helps only from an empty start (+0.017)." \
 "Detection view: boxes around the predicted blobs find 80% of the true polyp boxes at IoU ≥ 0.5 (box precision 0.685, official protocol)."]
-#plain[Same table as report §6, plus the aligned-memory row (your first run, see slide 16). Read it top to bottom: paper, yours, round 1, empty start, 512, ablation, first attempt. The paper's precision is rounded differently in the report (see Part C, item 1).]
+#plain[Same table as report §6, plus the aligned-memory row (your first run, see slide 17). Read it top to bottom: paper, yours, round 1, empty start, 512, ablation, first attempt. The paper's precision is rounded differently in the report (see Part C, item 1).]
 #ask([Which row is the most important?], [The ablation. Without feedback the network gets 0.883, so in my runs the memory adds little.])
 
-== Slide 15: Refinement: an empty start climbs higher than Otsu
-#thumb(15)
+== Slide 16: Refinement: an empty start climbs higher than Otsu
+#thumb(16)
 #slidesays["From Otsu (marks ~60% of the image): 0.615 → 0.842; each round trims the oversized guess" · "From an empty mask: 0.829 → 0.900, above the paper's 0.880, same weights" · "Strips: image | truth | Otsu | round 1 | round 2 | round 10 (Otsu start)"]
 #plain[The chart shows Dice per round for both starts, with the paper's line for reference. An empty start does not over-mark, so it starts higher and ends higher.]
 #where[`src/evaluate.py:95-120`; empty start with `--start zeros` (`:82-84`).]
 #ask([Why is the empty start better?], [Otsu marks about 60% of the image, so the first mask is too big. An empty mask avoids that, and the model was trained to check its memory against the image.])
 
-== Slide 16: Finding: an aligned memory teaches the model to copy it
-#thumb(16)
+== Slide 17: Finding: an aligned memory teaches the model to copy it
+#thumb(17)
 #slidesays["Our first run rotated the memory together with the image, which looked like a fix to the authors' code" · "Its predictions followed the hint: given nothing, recall fell to 0.41; given everything, precision fell to 0.27" · "In the authors' code about 2/3 of training samples are rotated or flipped while their memory is not, so the model must check the memory against the image" · "With it, an empty start works (0.83 vs 0.52), but an over-full start (all ones, Otsu) still pulls the first pass"]
 #plain[
 - The bar chart is the *memory probe*: one pass from five starting masks.
@@ -833,23 +848,23 @@ Table (Paper | Authors' code | This project): Input "512×512" | "256×256" | "2
 #where[`src/memory_probe.py:49-59` (the five starts); `src/train.py:79-82` (memory not moved).]
 #ask([What was your most interesting finding?], [Aligning the memory made the model copy it. The authors' misalignment forces the model to check the memory, so it works as a regulariser.])
 
-== Slide 17: Real leaves: my labels and the transferred model
-#thumb(17)
+== Slide 18: Real leaves: my labels and the transferred model
+#thumb(18)
 #slidesays["0.73: mean Dice between my labels and LDSD's masks on the same 30 photos. Most misses are definitions: LDSD marks a whole yellowed leaf (bottom) where I marked spots" \
 Rows (Otsu start, empty start): "Polyp model, no fine-tuning: 0.010, 0.004" · "My 24 Roboflow photos, from polyp weights: 0.517, 0.520" · "My 24 Roboflow photos, from random weights: 0.467, 0.461" · "470 LDSD photos, from polyp weights: 0.670, 0.681" · "470 LDSD photos, from random weights: 0.678, 0.667" \
 "With only 24 photos, starting from the polyp weights helps: 0.520 vs 0.461 (empty start)" · "Constant learning rate, 100 epochs: with only 6 validation photos the usual lr cut fired too early (first runs: 0.472 / 0.434)"]
 #plain[Same as report §7.3 and §7.4. Left: label agreement. Right: transfer results. The 470-photo rows are an upper reference with 20 times more labelled data.]
 #ask([Does transfer learning help?], [With 24 photos, yes (0.520 vs 0.461 from an empty start). With 470 photos it made no difference.])
 
-#secbar("Future Scope", "slide 18")
+#secbar("Future Scope", "slide 19")
 
-== Slide 18: Future scope
-#thumb(18)
+== Slide 19: Future scope
+#thumb(19)
 #slidesays[More and richer own data: "Label more leaf photos in Roboflow: 24 training photos are the main limit on the leaf result" · "Several classes (e.g. brown spot vs yellow blotch): needs a multi-channel output with softmax and a multi-channel memory; FANet as published is binary" \
 Closer to the paper: "Train with the paper's full protocol and several seeds, to tell the 0.038 Dice gap apart from run-to-run noise" · "Test on the paper's other polyp datasets (e.g. CVC-ClinicDB); we used one of seven" · "A separate validation split instead of choosing the checkpoint on test images" \
 Towards real use: "Video: use the previous frame's mask as the memory, so feedback comes free during a live colonoscopy" · "Train the soft gate (fmask head) the paper describes" · "Faster inference (mixed precision, smaller encoder) for real-time decision support"]
 #plain[
-- *Every point answers a limit you found* (speaker notes): few own photos (slide 17), one class, the gap to the paper (slide 14), one dataset of seven, checkpoint chosen on test (Part A, §8).
+- *Every point answers a limit you found* (speaker notes): few own photos (slide 18), one class, the gap to the paper (slide 15), one dataset of seven, checkpoint chosen on test (Part A, §8).
 - *0.038* = 0.880 (paper) − 0.842 (yours). With one run per setting you cannot say whether that gap is real or just noise between runs; several seeds would tell you.
 - *Multi-class*: today the output is one channel with a sigmoid (spot or not). For several diseases you need one channel per class with a *softmax*, and the memory must store one mask per class too.
 - *Video*: FANet needs a "previous mask". In a video the previous *frame* already gives one, so the feedback costs nothing extra.
@@ -861,10 +876,10 @@ Towards real use: "Video: use the previous frame's mask as the memory, so feedba
   [Why is video a natural fit?], [The previous frame's prediction is almost the same as the current polyp's mask, so it is a good memory without running extra rounds.],
 )
 
-#secbar("Conclusion", "slide 19")
+#secbar("Conclusion", "slide 20")
 
-== Slide 19: Conclusion
-#thumb(19)
+== Slide 20: Conclusion
+#thumb(20)
 #slidesays["FANet reproduced from scratch on Kvasir-SEG at 256×256: Dice 0.842 with the paper's protocol, 0.900 from an empty start (paper: 0.880 at 512×512)" · Works: "Full FANet from scratch; refinement adds +0.23 Dice from Otsu" · "Found: aligned memory makes the model copy it" · "Boxes from masks; own Roboflow dataset of real leaves" · Limits: "Feedback adds little: no-feedback ablation 0.883" · "512×512 no better: gap is not resolution" · "One dataset of seven; our test split may differ" · "Checkpoint chosen on test images, as in the authors' code" · Next: "More hand-labelled leaf photos in Roboflow" · "Train the fmask head (soft gate)" · "Video: reuse the previous frame's mask"]
 #plain[+0.23 is 0.842 − 0.615: what refinement adds from Otsu. Close with Works, Limits, Next, in that order.]
 #ask([What is the main limitation?], [The feedback adds little in my ablation, and each setting was trained once.])
@@ -876,16 +891,16 @@ None of these changes a headline number. If ma'am points one out, stay calm and 
 
 #table(columns: (auto, 1fr, 1fr),
   [\#], [What differs], [Correct value and what to say],
-  [1], [Paper precision: slide 14 shows 0.900; the report shows 0.901.], [The paper's value is 0.9005. "Rounding, ma'am."],
-  [2], [470 LDSD from random weights (Otsu start): the README says 0.679; report and slide 17 say 0.678.], [The log value is 0.67846, so 0.678 is right.],
+  [1], [Paper precision: slide 15 shows 0.900; the report shows 0.901.], [The paper's value is 0.9005. "Rounding, ma'am."],
+  [2], [470 LDSD from random weights (Otsu start): the README says 0.679; report and slide 18 say 0.678.], [The log value is 0.67846, so 0.678 is right.],
   [3], [Report §5: "extra runs on Kaggle T4/P100". The README says the first 512 run used a P100.], [The Kaggle logs show Tesla T4 for all three Kaggle runs. Say "Kaggle T4".],
   [4], [The README says the 512×512 run's best epoch was 77.], [The saved checkpoint is from epoch 80 (lowest loss). Epoch 77 only had the highest test Dice. 0.831 comes from epoch 80.],
-  [5], [Report §7.4 and slide 17: the default schedule cut the rate and "both models" scored about 0.04 lower.], [Only the fine-tuned run's rate was cut (epochs 13, 19, 25, 31; best epoch 7). The scratch run's rate was never cut; its re-run gained from 100 instead of 60 epochs.],
+  [5], [Report §7.4 and slide 18: the default schedule cut the rate and "both models" scored about 0.04 lower.], [Only the fine-tuned run's rate was cut (epochs 13, 19, 25, 31; best epoch 7). The scratch run's rate was never cut; its re-run gained from 100 instead of 60 epochs.],
   [6], [Slide 8: "cut-out holes on image and ground truth".], [Rotation and flips move image and mask together. Cut-out is applied to the image only (`src/train.py:82`).],
   [7], [The notebook and project book show the main run's command with `--amp`.], [The saved run settings show no AMP; the flag was added later. AMP was used for the 512 official, LDSD and Roboflow runs.],
   [8], [Report §8 mentions test-set selection only for Kvasir.], [The 470-photo LDSD runs and the synthetic-leaf runs also had no validation split, so they chose checkpoints on their test sets. Only the Roboflow runs are fully clean.],
   [9], [Report §6 lists "no feedback (ablation)" as a plain ablation.], [It was trained with the older augmentation (flips, 90° turns, brightness), not ±35° rotations. It also keeps MixPool, while the paper's baseline removes it.],
-  [10], [Empty start round 1: slide 15 says 0.829; slide 16 and report §6.2 say 0.83 and 0.828.], [Two scripts (evaluate vs memory probe) give 0.8292 and 0.8284. Not a real difference.],
+  [10], [Empty start round 1: slide 16 says 0.829; slide 17 and report §6.2 say 0.83 and 0.828.], [Two scripts (evaluate vs memory probe) give 0.8292 and 0.8284. Not a real difference.],
 )
 
 *If ma'am asks about something you cannot verify,* say so. Two things the repo cannot prove: which polyp checkpoint the synthetic-leaf zero-shot test used, and the script that picked the 30 Roboflow photos (only its list and rule are saved).
@@ -907,7 +922,7 @@ grid(columns: (1fr, 1fr), gutter: 12pt,
     [Ours, empty start], [0.900], [0.841],
     [No feedback], [0.883], [0.817],
     [Ours, 512×512], [0.831], [0.758],
-    [Aligned memory (slide 14)], [0.684], [0.589],
+    [Aligned memory (slide 15)], [0.684], [0.589],
   )
   Recall 0.934, precision 0.835, F2 0.868. Boxes: precision 0.685, recall 0.800. About 87 images/s.
 

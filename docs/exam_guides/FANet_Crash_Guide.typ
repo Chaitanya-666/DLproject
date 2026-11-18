@@ -42,8 +42,8 @@
   [IEEE paper, last 5 years, fairly advanced], [IEEE TNNLS vol. 34, no. 11, 2023 (online 2022). Memory + MixPool + test-time refinement, more than a plain U-Net.],
   [From scratch], [Every layer, loss, metric, Otsu, connected components, training and evaluation written with plain PyTorch / NumPy.],
   [Paper's dataset], [Kvasir-SEG, the paper's 880/120 ratio.],
-  [Own small dataset (in Roboflow), explained], [30 public leaf photos, labelled by you in Roboflow, split 24/6, augmented 5× = 126 images.],
-  [PPT], [19 slides, plus a 10-page report and an executed notebook.],
+  [Own small dataset (in Roboflow), explained], [30 public leaf photos, labelled by you in Roboflow, split 24/6, augmented 5× = 126 images. Plus the lab's detection set: 220 tomato-leaf photos, 4 classes, your boxes, 3× → 572 images.],
+  [PPT], [20 slides, plus a 11-page report and an executed notebook.],
 )
 
 #grid(columns: (1fr, 1fr), gutter: 10pt,
@@ -171,7 +171,7 @@ Leaf rows show Otsu start / empty start on the 118 LDSD test photos.
 - *Constant-LR re-run:* with 6 validation photos the plateau schedule cut the rate at epochs 13, 19, 25 (best epoch 7). Both runs were redone with a constant rate for 100 epochs; the rule was fixed before seeing test scores. (The first scratch run never had a cut; its gain came from 100 vs 60 epochs.)
 
 // =====================================================================
-= Deck talk track (one line per slide, 19 slides)
+= Deck talk track (one line per slide, 20 slides)
 #{
 set text(10pt)
 table(columns: (auto, auto, 1fr),
@@ -192,15 +192,16 @@ table(columns: (auto, auto, 1fr),
   [11], [Own dataset], [Same task, new domain; 30 public CC0 photos, labels drawn by me; Semantic Segmentation project for pixel masks.],
   [12], [Roboflow steps], [My screenshots: hand labelling, 30 jobs, resize 256, augmentations; split 24/6, v1 with 126 images, export, convert.],
   [13], [Version v1], [No Roboflow test split (LDSD's 118 are the test); flips and turns since a leaf has no up; 5× on train only; offline vs online augmentation.],
+  [14], [Roboflow detection set], [Lab rule ≥ 200 images, ≥ 4 classes: 220 PlantVillage tomato photos, 55 per class (bacterial spot, early blight, late blight, healthy); my 233 boxes; 176/22/22; 3× → 572; YOLOv8 export.],
   table.cell(colspan: 3, fill: luma(232))[*Result Analysis*],
-  [14], [Results], [0.842 vs 0.880; empty start 0.900; 512 gives 0.831; no feedback 0.883, so the memory adds little; boxes find 80% of polyps.],
-  [15], [Refinement], [From Otsu 0.615 → 0.842 as rounds trim the oversized mask; from empty 0.829 → 0.900.],
-  [16], [Finding], [Aligning the memory made the model copy it (recall 0.41 from nothing); the authors' misalignment is a regulariser (0.83 vs 0.52).],
-  [17], [Real leaves], [Labels agree at 0.73; zero-shot finds nothing; 0.517 vs 0.467 with 24 photos; constant LR because 6 val photos made the schedule cut early.],
+  [15], [Results], [0.842 vs 0.880; empty start 0.900; 512 gives 0.831; no feedback 0.883, so the memory adds little; boxes find 80% of polyps.],
+  [16], [Refinement], [From Otsu 0.615 → 0.842 as rounds trim the oversized mask; from empty 0.829 → 0.900.],
+  [17], [Finding], [Aligning the memory made the model copy it (recall 0.41 from nothing); the authors' misalignment is a regulariser (0.83 vs 0.52).],
+  [18], [Real leaves], [Labels agree at 0.73; zero-shot finds nothing; 0.517 vs 0.467 with 24 photos; constant LR because 6 val photos made the schedule cut early.],
   table.cell(colspan: 3, fill: luma(232))[*Future Scope*],
-  [18], [Future scope], [Each step answers a limit: more Roboflow photos and classes; paper protocol with seeds (0.038 gap), other datasets, clean validation; video frames as memory, soft fmask, faster inference.],
+  [19], [Future scope], [Each step answers a limit: more Roboflow photos and classes; paper protocol with seeds (0.038 gap), other datasets, clean validation; video frames as memory, soft fmask, faster inference.],
   table.cell(colspan: 3, fill: luma(232))[*Conclusion*],
-  [19], [Conclusion], [Reproduced 0.842 / 0.900; limits: feedback adds little, 512 no better, one dataset, test-set selection; next: more labels, soft fmask, video.],
+  [20], [Conclusion], [Reproduced 0.842 / 0.900; limits: feedback adds little, 512 no better, one dataset, test-set selection; next: more labels, soft fmask, video.],
 )
 }
 
@@ -210,16 +211,16 @@ table(columns: (auto, auto, 1fr),
 set text(10pt)
 table(columns: (auto, 1fr, 1fr),
   [\#], [What differs], [Correct value / what to say],
-  [1], [Paper precision: slide 14 shows 0.900, report 0.901.], [Paper value is 0.9005; "just rounding".],
+  [1], [Paper precision: slide 15 shows 0.900, report 0.901.], [Paper value is 0.9005; "just rounding".],
   [2], [LDSD 470 from scratch: README 0.679, report and deck 0.678.], [CSV 0.67846, so 0.678 is right.],
   [3], [README: aligned 512 run on a P100; report "Kaggle T4/P100".], [Kaggle log shows Tesla T4. All Kaggle runs used T4s.],
   [4], [README: official 512 "best epoch 77".], [`best.pt` is epoch 80 (lowest loss); 77 had the highest test Dice. 0.831 is from epoch 80.],
-  [5], [Report §7.4 / slide 17: default schedule cut the LR and "both models" scored about 0.04 lower.], [Only the fine-tuned run was cut (13, 19, 25, 31; best 7). The scratch run's gain came from 100 vs 60 epochs.],
+  [5], [Report §7.4 / slide 18: default schedule cut the LR and "both models" scored about 0.04 lower.], [Only the fine-tuned run was cut (13, 19, 25, 31; best 7). The scratch run's gain came from 100 vs 60 epochs.],
   [6], [Slide 8: cut-out on "image and ground truth".], [Rotation and flips move both; cut-out is on the image only (`train.py:82`).],
   [7], [Notebook / project book: main run used `--amp`.], [Stored arguments show no AMP (flag added later). AMP was used for the 512-official, LDSD and Roboflow runs.],
   [8], [Report says test-as-validation for Kvasir only.], [The LDSD-470 and synthetic runs also selected on their test sets. Only the Roboflow runs are clean.],
   [9], [Report's no-feedback row looks like a plain ablation.], [It was trained with the older aligned-style augmentation (flips, 90° turns, brightness), not ±35°.],
-  [10], [Small rounding: empty start round 1 is 0.829 (slide 15) vs 0.828 / 0.83 (probe); deck line counts are one more than `wc -l`; FPS 87 vs 88.], [Two scripts and two counting methods; no real discrepancy.],
+  [10], [Small rounding: empty start round 1 is 0.829 (slide 16) vs 0.828 / 0.83 (probe); deck line counts are one more than `wc -l`; FPS 87 vs 88.], [Two scripts and two counting methods; no real discrepancy.],
 )
 }
 

@@ -77,7 +77,7 @@
   #block(width: 90%, inset: 12pt, stroke: 0.7pt + rgb("#1f6f78"), radius: 3pt)[
     #set align(left)
     #set par(justify: true)
-    *What this is.* One document that lets you explain *everything* about the project after a single careful read: the deep-learning basics from zero, the paper, every block of the model, every line of code that matters, every experiment and number, the custom dataset, the 19 slides and the 10-page report, and 100+ likely viva questions with honest answers.
+    *What this is.* One document that lets you explain *everything* about the project after a single careful read: the deep-learning basics from zero, the paper, every block of the model, every line of code that matters, every experiment and number, the custom dataset, the 20 slides and the 11-page report, and 100+ likely viva questions with honest answers.
 
     *Why you can trust the numbers.* Every number here was checked against the files in the repo (`runs/*/log.csv`, `runs/*/eval_test*/results.csv`, `memory_probe.csv`, `docs/report.typ`, the deck text in `presentation/build_deck.js` and the PPTX). Where the report, the deck and the logs disagree, @sec-incons says so and tells you what to say.
 
@@ -98,14 +98,14 @@
 = Start here <sec-start>
 
 == What the exam is
-The ESE for this lab is *project based*. Ma'am will look at your *report* (10 pages, `docs/report.pdf`) and your *slides* (19 slides, `FANet_ChaitanyaShinde_231070066.pptx`) and ask questions. She expects you to know everything in them. This guide follows the report and the slides exactly, and goes deeper so that no follow-up question surprises you.
+The ESE for this lab is *project based*. Ma'am will look at your *report* (11 pages, `docs/report.pdf`) and your *slides* (20 slides, `FANet_ChaitanyaShinde_231070066.pptx`) and ask questions. She expects you to know everything in them. This guide follows the report and the slides exactly, and goes deeper so that no follow-up question surprises you.
 
 == Your three-day plan
 #table(columns: (auto, 1fr),
   [Day], [What to do],
   [Mon 16 Nov (today)], [Sections 1 to 8: the project on one page, the code map, the theory from zero, the problem, the paper.],
   [Tue 17 Nov], [Sections 9 to 15: architecture, loss and metrics, training, testing, every experiment, the custom dataset, Kaggle.],
-  [Wed 18 Nov], [Sections 16 to 19: present the 19 slides out loud once (12 to 15 minutes), then answer the viva bank out loud. Read the inconsistencies section twice.],
+  [Wed 18 Nov], [Sections 16 to 19: present the 20 slides out loud once (12 to 15 minutes), then answer the viva bank out loud. Read the inconsistencies section twice.],
   [Thu 19 Nov morning], [Only the cheat sheet (last page) and the "Say this" boxes.],
 )
 
@@ -149,7 +149,7 @@ The brief (photo `brief/finalProjectDeepLearning.jpeg`, Hinglish): individual pr
   [From scratch], [Every layer, the loss, training loop, metrics, Otsu, connected components and refinement written with plain PyTorch / NumPy.],
   [Paper's dataset], [Kvasir-SEG, the paper's 880/120 split ratio.],
   [Own dataset in Roboflow], [30 real leaf photos labelled by hand, versioned and augmented in Roboflow.],
-  [PPT and notebook], [19-slide deck and an executed Jupyter notebook (`notebooks/FANet_project.ipynb`).],
+  [PPT and notebook], [20-slide deck and an executed Jupyter notebook (`notebooks/FANet_project.ipynb`).],
 )
 
 *How the topic was chosen.* First plan CondInst (instance segmentation on COCO) was infeasible on one GPU. Second plan ColonSegNet (IEEE Access, March 2021) was dropped on 13 Oct because March 2021 is outside a strict 5-year window. FANet was registered on 13 Oct (row 29 of the sheet): strongest venue, safely inside the window, same dataset.
@@ -188,7 +188,7 @@ table(columns: (auto, auto, 1fr),
   [Synthetic leaves], [`src/make_synthetic.py:37-100`], [irregular blob polygons (`:37-47`), leaf + spots + blur/noise (`:50-100`)],
   [Figures], [`src/figures.py`], [learning curves, refinement chart, strip montages],
   [Kaggle offload], [`kaggle/offload.sh`, `kaggle/run_template.py`], [push (`:34-59`) / status / pull (`:64-75`) a private GPU run],
-  [Deck], [`presentation/build_deck.js`], [builds the 19-slide PPTX from the CSVs in `runs/`],
+  [Deck], [`presentation/build_deck.js`], [builds the 20-slide PPTX from the CSVs in `runs/`],
 )
 }
 
@@ -707,7 +707,7 @@ table(columns: (auto, 4.3cm, 1.35fr, 0.95fr, 1.3fr),
   [Ours, 512×512, 100 epochs], [0.831], [0.758], [0.917], [0.831], [0.860],
   [Aligned memory (first run)], [0.684], [0.589], [0.958], [0.619], [0.775],
 )
-This is the report's Table (§6) plus the aligned row from slide 14.
+This is the report's Table (§6) plus the aligned row from slide 15.
 
 + *The gap.* Under the paper's own protocol we are 0.038 below (0.842 vs 0.880). Close for an independent from-scratch implementation.
 + *Not the resolution.* The 512×512 run (paper's size, paper's 100 epochs) scores 0.831, no better.
@@ -835,7 +835,7 @@ Model-only checkpoints with a model card on Hugging Face: `huggingface.co/Ckorio
 // =====================================================================
 = The deck, slide by slide <sec-deck>
 
-19 slides, built by `node presentation/build_deck.js` from the CSVs in `runs/` (so the numbers on the slides are read from the files, not typed). Target: 12 to 15 minutes. For each slide: what is on it, and what to say.
+20 slides, built by `node presentation/build_deck.js` from the CSVs in `runs/` (so the numbers on the slides are read from the files, not typed). Target: 12 to 15 minutes. For each slide: what is on it, and what to say.
 
 #slide(1, "Title", [title "Polyp Segmentation with FANet", subtitle (IEEE TNNLS 2023, from scratch on Kvasir-SEG, transfer to plant disease spotting), name and roll number, a Kvasir image with its mask.],
   [Good morning ma'am. My project is polyp segmentation with FANet, a feedback attention network from IEEE TNNLS 2023. I implemented it from scratch in PyTorch, trained it on the paper's own dataset Kvasir-SEG, and transferred it to leaf disease spots using my own Roboflow dataset.])
@@ -863,23 +863,25 @@ Model-only checkpoints with a model card on Hugging Face: `huggingface.co/Ckorio
   [These are my screenshots from 7 November: labelling each spot with Smart Polygon and Polygon, one job per photo, resizing to 256 by 256, and the augmentations. Then I split 24 and 6, generated version 1 with 126 images, exported semantic masks and converted them with my script.])
 #slide(13, "Version v1", [screenshot of the generated version; why these settings; offline vs online augmentation.],
   [No Roboflow test split, because my test set is LDSD's 118 photos that are never trained on. Stretch to 256 because that is the training size. Flips and turns because a leaf has no natural up; brightness for different light. Five copies only on train, so validation stays real. Roboflow's copies are offline; my code also augments online every epoch.])
-#slide(14, "Results on the 120 test images", [the results table (paper, official protocol, round 1, empty start, 512, no feedback, aligned) and the ablation and detection notes.],
+#slide(14, "Roboflow detection dataset", [one held-out photo per class with my box; 220 PlantVillage tomato photos, 4 classes, 55 each; 233 boxes drawn by hand; split 176/22/22; 640×640, flips, ±15° rotation, ±15% brightness, 3× on train → 572 images; YOLOv8 export.],
+  [This is the lab's Roboflow rule: at least 200 annotated images and 4 classes. It is a separate detection set: 220 tomato-leaf photos from PlantVillage, 55 each of bacterial spot, early blight, late blight and healthy. I drew every box in Roboflow; the class comes from PlantVillage's expert labels. Split 80/10/10, augmentation only on train, exported in YOLOv8 format. The next step is training a detector on it.])
+#slide(15, "Results on the 120 test images", [the results table (paper, official protocol, round 1, empty start, 512, no feedback, aligned) and the ablation and detection notes.],
   [Under the paper's protocol I get 0.842 against 0.880. Round 1 alone is 0.615, so refinement adds a lot. From an empty start the same weights get 0.900. At 512 I get 0.831, so resolution is not the gap. The honest key row: without feedback the network gets 0.883, so in my runs the memory adds little. The detection view finds 80% of polyp boxes at IoU 0.5.])
-#slide(15, "Refinement chart", [line chart of test Dice per round: Otsu start (0.615 → 0.842), empty start (0.829 → 0.900), paper 512 as a reference line; refinement strips.],
+#slide(16, "Refinement chart", [line chart of test Dice per round: Otsu start (0.615 → 0.842), empty start (0.829 → 0.900), paper 512 as a reference line; refinement strips.],
   [Each round feeds the previous mask back in. From Otsu the first mask is far too big, and every round trims it. Starting from an empty mask the model climbs from 0.829 to 0.900. Most of the gain comes in the first few rounds.])
-#slide(16, "Finding: aligned memory teaches copying", [bar chart of one-pass Dice from five starting masks, aligned run vs official run; four bullet points.],
+#slide(17, "Finding: aligned memory teaches copying", [bar chart of one-pass Dice from five starting masks, aligned run vs official run; four bullet points.],
   [My first run rotated the memory with the image, which looked like a fix. The model then copied its memory: given nothing, recall fell to 0.41; given everything, precision fell to 0.27. In the authors' code two-thirds of samples have a misaligned memory, so the model must check it. With that, an empty start works: 0.83 against 0.52.])
-#slide(17, "Real leaves: labels and transfer", [my label vs LDSD's on two photos; 0.73 agreement; the results table on 118 LDSD photos; three bullets.],
+#slide(18, "Real leaves: labels and transfer", [my label vs LDSD's on two photos; 0.73 agreement; the results table on 118 LDSD photos; three bullets.],
   [My labels agree with LDSD's masks at 0.73; most misses are definitions, like LDSD marking a whole yellow leaf. Without fine-tuning the polyp model finds almost nothing: a domain gap. With only 24 photos, starting from the polyp weights helps: 0.517 against 0.467. I used a constant learning rate because with 6 validation photos the usual schedule cut it too early.])
-#slide(18, "Future scope", [three cards. More and richer own data: more Roboflow photos, several classes (softmax output, multi-channel memory). Closer to the paper: full protocol with several seeds for the 0.038 gap, other polyp datasets such as CVC-ClinicDB, a separate validation split. Towards real use: previous video frame as the memory, train the fmask soft gate, faster inference.],
+#slide(19, "Future scope", [three cards. More and richer own data: more Roboflow photos, several classes (softmax output, multi-channel memory). Closer to the paper: full protocol with several seeds for the 0.038 gap, other polyp datasets such as CVC-ClinicDB, a separate validation split. Towards real use: previous video frame as the memory, train the fmask soft gate, faster inference.],
   [Each next step answers a limit I found. First, more labelled leaf photos, since 24 training photos are the main limit. Then the paper's full protocol with several seeds, to see if the 0.038 gap is real, and its other datasets. For real use, video is a natural fit: the previous frame's mask is a free memory.])
-#slide(19, "Conclusion", [one-line summary; Works / Limits / Next columns.],
+#slide(20, "Conclusion", [one-line summary; Works / Limits / Next columns.],
   [FANet is reproduced from scratch: 0.842 with the paper's protocol, 0.900 from an empty start. What works: the full model, refinement (+0.23 from Otsu), the copying finding, boxes from masks, and my Roboflow dataset. Limits: feedback adds little in my ablation, 512 is no better, one dataset of seven, and the checkpoint is chosen on the test images. Next: more labelled leaf photos, a trainable soft fmask, and video, where the previous frame is a natural feedback input.])
 
 // =====================================================================
 = The report, section by section <sec-report>
 
-The submitted report (`docs/report.pdf`, 10 pages, dated 7 November 2026). What each section says, so you can point to it.
+The submitted report (`docs/report.pdf`, 11 pages, updated 18 November 2026 with the detection dataset). What each section says, so you can point to it.
 
 #table(columns: (auto, 1fr),
   [Section], [What it says (and what to be ready for)],
@@ -1035,16 +1037,16 @@ Checked line by line. None of them changes a headline number, but ma'am might no
 
 #table(columns: (auto, 1fr, 1fr),
   [\#], [What differs], [The truth and what to say],
-  [1], [Paper precision: slide 14 shows *0.900*; report and project book show *0.901*.], [The paper's value is 0.9005; the deck rounds down, the report rounds up. "0.9005, rounding."],
+  [1], [Paper precision: slide 15 shows *0.900*; report and project book show *0.901*.], [The paper's value is 0.9005; the deck rounds down, the report rounds up. "0.9005, rounding."],
   [2], [470-photo LDSD from scratch (Otsu start): README says *0.679*; report, deck and book say *0.678*.], [The CSV value is 0.67846, so *0.678* is right. The README rounding is off.],
   [3], [README says the first (aligned) 512 run used a *Kaggle P100*; the report says "Kaggle T4/P100".], [The Kaggle log of that run shows *Tesla T4* cards. All three Kaggle runs ran on T4s. Say "Kaggle T4".],
   [4], [README says the official 512 run's "best epoch 77".], [Epoch 77 had the highest test Dice, but `best.pt` is chosen by lowest loss: *epoch 80*. Its numbers (0.831) are from epoch 80.],
-  [5], [Report §7.4 and slide 17: with the default schedule "the rate was cut ... and both models scored about 0.04 lower".], [True for the fine-tuned run (cuts at 13, 19, 25, 31; best epoch 7; early-stopped at 47). The first scratch run never had its rate cut (60 epochs at 1e-4, best 55); its re-run gain comes from 100 vs 60 epochs.],
+  [5], [Report §7.4 and slide 18: with the default schedule "the rate was cut ... and both models scored about 0.04 lower".], [True for the fine-tuned run (cuts at 13, 19, 25, 31; best epoch 7; early-stopped at 47). The first scratch run never had its rate cut (60 epochs at 1e-4, best 55); its re-run gain comes from 100 vs 60 epochs.],
   [6], [Slide 8: "cut-out holes on image and ground truth".], [Rotation and flips move image and ground truth; cut-out is applied to the *image only* (`src/train.py:82`).],
   [7], [Notebook text and project book say the final model was trained with `--amp`.], [The checkpoint's stored arguments show no AMP: the main run (19 Oct) predates the flag. AMP was used for the 512-official, LDSD and Roboflow runs.],
   [8], [Report §8 says checkpoints were chosen on test images for Kvasir and on 6 val photos for Roboflow.], [Also true but unstated: the 470-photo LDSD runs and the synthetic-leaf runs had no val split either, so they selected on their test sets too (`train.py:147`). Only the Roboflow runs are fully clean.],
   [9], [Report's "no feedback" row is listed as a plain ablation.], [It was trained with the older aligned-style augmentation (flips, 90° turns, brightness), not ±35° rotations (README notes this). Mention it if pushed.],
-  [10], [Empty start round 1: slide 15 says *0.829* (from `evaluate.py`); slide 16 / report say *0.828* / 0.83 (from `memory_probe.py`).], [Two scripts, tiny numerical difference (0.8292 vs 0.8284); same for Otsu 0.6148 vs 0.6151. Not a real discrepancy.],
+  [10], [Empty start round 1: slide 16 says *0.829* (from `evaluate.py`); slide 17 / report say *0.828* / 0.83 (from `memory_probe.py`).], [Two scripts, tiny numerical difference (0.8292 vs 0.8284); same for Otsu 0.6148 vs 0.6151. Not a real discrepancy.],
   [11], [Slide 9 line counts (e.g. `blocks.py` 117, `train.py` 224).], [`wc -l` gives one less (116, 223): the deck counts the empty line after the final newline. Harmless.],
   [12], [Report says the 256 model runs at "about 87 images/s"; project book says "about 88".], [87.3 (Otsu start) and 88.4 (empty start) in `results.csv`. Both fine.],
 )

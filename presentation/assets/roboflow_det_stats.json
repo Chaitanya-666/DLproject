@@ -1,0 +1,43 @@
+{
+  "classes": [
+    "bacterial_spot",
+    "early_blight",
+    "healthy",
+    "late_blight"
+  ],
+  "splits": {
+    "train": {
+      "images": 528,
+      "originals": 176
+    },
+    "valid": {
+      "images": 22,
+      "originals": 22
+    },
+    "test": {
+      "images": 22,
+      "originals": 22
+    }
+  },
+  "boxes_per_class": {
+    "bacterial_spot": 148,
+    "early_blight": 145,
+    "healthy": 143,
+    "late_blight": 165
+  },
+  "originals_per_class": {
+    "bacterial_spot": 55,
+    "early_blight": 55,
+    "healthy": 55,
+    "late_blight": 55
+  },
+  "boxes_on_originals": {
+    "bacterial_spot": 56,
+    "early_blight": 55,
+    "healthy": 55,
+    "late_blight": 67
+  },
+  "original_images": 220,
+  "total_images": 572,
+  "universe": "https://universe.roboflow.com/chaitanyadl/tomato-leaf-disease-det/dataset/1"
+}
