@@ -1,6 +1,5 @@
 // Formal project report (the document submitted to the faculty).
 // Compile from the repo root:  typst compile --root . docs/report.typ docs/report.pdf
-#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
 #set document(title: "FANet from scratch: project report", author: "Chaitanya Shinde")
 #set page(paper: "a4", margin: (x: 2.2cm, y: 2.2cm), numbering: "1",
@@ -68,29 +67,25 @@ FANet's blocks use three standard ideas. A *residual block* [4] adds a learned c
 FANet [1] adds a *feedback memory* to a U-Net-style network. For every training image the network keeps the mask it predicted in an earlier epoch and feeds it back in as a second input, where it acts as attention inside every encoder and decoder block. At test time the same idea becomes *iterative refinement*: the network's own output is fed back as the next input mask for several rounds. The paper reports Dice 0.880 on Kvasir-SEG, against 0.852 for the same network without its MixPool attention blocks.
 
 == Architecture
-#figure(
-  diagram(spacing: (5.4mm, 7mm), node-stroke: 0.6pt, node-corner-radius: 2pt,
-    node((0,0), [image \ 3×256²], stroke: none),
-    node((1,0), [E1], fill: rgb("#dcecef")), node((2,0), [E2], fill: rgb("#dcecef")),
-    node((3,0), [E3], fill: rgb("#dcecef")), node((4,0), [E4], fill: rgb("#dcecef")),
-    node((5,0), [D1], fill: rgb("#e8f3dc")), node((6,0), [D2], fill: rgb("#e8f3dc")),
-    node((7,0), [D3], fill: rgb("#e8f3dc")), node((8,0), [D4], fill: rgb("#e8f3dc")),
-    node((9,0), [concat \ + 1×1 conv]), node((10,0), [logits \ 1×256²], stroke: none),
-    edge((0,0), (1,0), "-|>"), edge((1,0), (2,0), "-|>"), edge((2,0), (3,0), "-|>"), edge((3,0), (4,0), "-|>"),
-    edge((4,0), (5,0), "-|>"), edge((5,0), (6,0), "-|>"), edge((6,0), (7,0), "-|>"), edge((7,0), (8,0), "-|>"),
-    edge((8,0), (9,0), "-|>"), edge((9,0), (10,0), "-|>"),
-    edge((4,0), (4,-1), (5,-1), (5,0), "--|>"), edge((3,0), (3,-1.4), (6,-1.4), (6,0), "--|>"),
-    edge((2,0), (2,-1.8), (7,-1.8), (7,0), "--|>"), edge((1,0), (1,-2.2), (8,-2.2), (8,0), "--|>", [skips], label-pos: 0.5),
-    node((0,1.4), [previous mask \ 1×256²], stroke: none, fill: rgb("#fde8e4")),
-    edge((0,1.4), (9,1.4), (9,0), "-|>", stroke: rgb("#c0392b")),
-    edge((1,1.4), (1,0), "-|>", stroke: rgb("#c0392b")), edge((2,1.4), (2,0), "-|>", stroke: rgb("#c0392b")),
-    edge((3,1.4), (3,0), "-|>", stroke: rgb("#c0392b")), edge((4,1.4), (4,0), "-|>", stroke: rgb("#c0392b")),
-    edge((5,1.4), (5,0), "-|>", stroke: rgb("#c0392b")), edge((6,1.4), (6,0), "-|>", stroke: rgb("#c0392b")),
-    edge((7,1.4), (7,0), "-|>", stroke: rgb("#c0392b")), edge((8,1.4), (8,0), "-|>", stroke: rgb("#c0392b")),
-  ),
-  caption: [FANet. The previous mask (red) enters every encoder (E) and decoder (D) block and is concatenated before the output layer. Dashed lines are skip connections.],
-)
+#fig("../presentation/figures/diagram_architecture.png", [FANet as implemented in `src/model.py`, drawn in the style of the paper's Fig. 2(c). Bottom row: encoder; top row: decoder, read right to left; dashed: skip connections (concatenated); red: the previous mask from the memory, which enters all eight MixPool blocks and the output head. Shapes are channels × height × width for a 256×256 input. The pictures are a real test image, its Otsu start mask and the final predicted mask.])
 Each *encoder block* is two residual blocks (with squeeze-and-excitation), a MixPool block and 2×2 max pooling. Each *decoder block* upsamples by a transposed convolution, concatenates the skip features, and applies two residual blocks and a MixPool block. The last decoder output is concatenated with the previous mask and a 1×1 convolution gives one channel of logits. The model has 7,720,266 parameters.
+
+#figure(
+  table(columns: (auto, 1fr, auto, auto, auto), stroke: 0.4pt, inset: 4.5pt, align: (left, left, center, right, right),
+    table.header([*Stage*], [*Layers (channels in→out)*], [*Output*], [*Parameters*], [*fmask*]),
+    [E1], [SE-Res 3→32, SE-Res 32→32, MixPool, MaxPool 2×2], [32×128²], [48,993], [9,345],
+    [E2], [SE-Res 32→64, SE-Res 64→64, MixPool, MaxPool], [64×64²], [210,753], [37,121],
+    [E3], [SE-Res 64→128, SE-Res 128→128, MixPool, MaxPool], [128×32²], [839,297], [147,969],
+    [E4], [SE-Res 128→256, SE-Res 256→256, MixPool, MaxPool], [256×16²], [3,349,761], [590,849],
+    [D1], [TConv 4×4/2, concat s4 (512), SE-Res 512→128, SE-Res, MixPool], [128×32²], [2,461,569], [147,969],
+    [D2], [TConv, concat s3 (256), SE-Res 256→64, SE-Res, MixPool], [64×64²], [616,385], [37,121],
+    [D3], [TConv, concat s2 (128), SE-Res 128→32, SE-Res, MixPool], [32×128²], [154,593], [9,345],
+    [D4], [TConv, concat s1 (64), SE-Res 64→16, SE-Res, MixPool], [16×256²], [38,897], [2,369],
+    [Head], [concat previous mask (17), 1×1 conv, sigmoid], [1×256²], [18], [0],
+    [*Total*], [], [], [*7,720,266*], [*982,088 (12.7%)*],
+  ),
+  caption: [Shapes and parameter counts per stage, measured on the model with forward hooks. E4 and D1, the two lowest-resolution stages, hold 75% of the weights. The last column is the part that never trains (@sec-mixpool).],
+) <tab-layers>
 
 == MixPool: the feedback-attention block <sec-mixpool>
 For features $x$ of size $C times h times w$ and the previous mask $M$:
@@ -102,12 +97,14 @@ For features $x$ of size $C times h times w$ and the previous mask $M$:
 + the two halves are concatenated.
 The plain half guarantees that a wrong previous mask cannot destroy the prediction; the network learns how much to trust each half.
 
-#fig("../presentation/assets/report_slide-07.png", [MixPool as drawn on slide 7: the fmask head and the max-pooled previous mask are combined with OR into the attention map; one half of the channels sees only the attended region, the other half sees everything.], w: 82%)
+#fig("../presentation/figures/diagram_blocks.png", [(a) SE-Residual block: two 3×3 convolutions with batch norm on the main path, a 1×1 convolution, batch norm and squeeze-and-excitation on the shortcut, added and passed through ReLU; the inset shows the squeeze-and-excitation steps. (b) MixPool block: the thresholded fmask and the max-pooled previous mask are combined with OR into the attention map $A$; one half of the channels sees only $F times A$, the other half sees all of $F$.])
 
 == Training with a feedback memory, and testing with refinement
 Before the first epoch the memory holds the Otsu mask of every training image. In each epoch, image $i$ is passed with `memory[i]`, the loss ($0.5 dot "BCE" + 0.5 dot "Dice"$) is minimised with Adam, and the thresholded prediction is staged. Only when the validation loss improves does the staged copy replace the memory, so the memory always comes from the best model so far. The ground truth is never an input.
 
 At test time the memory starts from Otsu and the network is run ten times, each round feeding its thresholded output back in. Metrics are recorded after every round.
+
+#fig("../presentation/figures/diagram_loop.png", [Top: one training epoch. The hint for each image is looked up in the memory by its index (so shuffling is safe) and is not rotated with the image; predictions are staged and committed only when the validation loss improves. Bottom: testing with frozen weights; each round's mask is written back as the next round's hint. Bars: test Dice after each round of the main run.])
 
 = Implementation <sec-impl>
 Everything is written in PyTorch from basic layers (`Conv2d`, `BatchNorm2d`, `ConvTranspose2d`, pooling, `Linear`). No pretrained weights, no `torchvision.models`, no segmentation libraries. The authors' public code was read only to check details.
@@ -128,6 +125,8 @@ Everything is written in PyTorch from basic layers (`Conv2d`, `BatchNorm2d`, `Co
 
 = Experimental setup <sec-setup>
 *Dataset.* Kvasir-SEG [2]: 1000 colonoscopy images with polyp masks drawn by doctors. Split 880 train / 120 test with a fixed seed, the paper's ratio. Images resized to 256×256 (the size used in the authors' code; the paper's text uses 512×512, which we also run).
+
+#fig("../presentation/figures/diagram_pipeline.png", [Data and scoring pipeline. Masks are resized with nearest neighbour so they stay 0/1, and cleaned with a half-of-maximum threshold because Kvasir's JPEG masks carry compression noise. Scores are computed per image and then averaged; boxes come from connected blobs of each mask.])
 
 #fig("../presentation/assets/kvasir_example.png", [A Kvasir-SEG image, its ground-truth mask drawn by doctors, and the mask overlaid.], w: 70%)
 

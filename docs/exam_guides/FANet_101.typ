@@ -133,7 +133,9 @@ Pixel *accuracy* is misleading here: a polyp usually covers only a small part of
 = 5. How FANet works
 
 == 5.1 The skeleton: a U-Net
-#image("figures/kvasir_example.png", width: 55%)
+#image("figures/diagram_architecture.png", width: 100%)
+_Walk it with your finger: input bottom left → right through the encoder → up the bottleneck → left through the decoder → output head → mask top left. Dashed teal = skips, red = the previous mask (the hint)._
+
 - *Encoder* (going down): 4 stages, each = 2 residual blocks → MixPool → 2×2 max-pool. Image size goes $256 → 128 → 64 → 32 → 16$; channels go $32 → 64 → 128 → 256$. It learns *what* is in the image.
 - *Decoder* (going up): 4 stages, each = transposed conv (×2 size) → join the encoder's features of the same size (*skip connection*) → 2 residual blocks → MixPool. It learns *where exactly*.
 - *Skip connections* bring back the fine detail (sharp edges) that pooling threw away.
@@ -154,6 +156,8 @@ Inputs: the feature map $x$ and the *previous mask* $m$ for this image.
 
 Step 4 is the safety net: even if the previous mask is wrong, the full features still reach the next layer.
 
+#image("figures/diagram_blocks.png", width: 100%)
+
 #say["MixPool lets the previous mask decide *where to look*. Half the channels see only the region the mask points to; the other half see everything, so a wrong mask can't blind the network."]
 
 *Soft vs hard attention:* soft attention multiplies by weights in (0, 1) (like SE); hard attention multiplies by exactly 0 or 1 (like MixPool's gate).
@@ -164,6 +168,9 @@ Step 4 is the safety net: even if the previous mask is wrong, the full features 
 - *Each epoch:* image + its stored mask → model → new prediction. The prediction is *staged*.
 - *If the validation loss improved*, the checkpoint is saved and the staged predictions become the new memory (`--memory-update on-improve`).
 - So next epoch, each image comes with the model's own *earlier* answer for it.
+- *Shuffling is safe:* the hint is looked up by the image's index, not by its position in the batch.
+
+#image("figures/diagram_loop.png", width: 100%)
 
 == 5.5 Iterative refinement (testing)
 #image("figures/strip_kvasir_official.png", width: 100%)

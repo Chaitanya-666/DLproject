@@ -234,108 +234,33 @@ pres.addSection({ title: "Proposed System" });
   s.addNotes("The three ideas that make FANet more than a U-Net. Ground truth is never fed in: the memory holds only the model's own past predictions, starting from an Otsu threshold.");
 }
 
-// ------------------------------------------------------------------ 5. architecture
+// ------------------------------------------------------------------ 5-7. paper-style diagrams
+// Drawn by presentation/make_diagrams.py (layers, channels and sizes from src/model.py and src/blocks.py).
 
-{
-  const s = content("Architecture: a U-Net that also takes the previous mask", "Proposed System");
-  const W = 1.55, H = 0.72;
-  const enc = [[0.75, 1.75, "Encoder 1", "32 ch · 256²"], [1.55, 2.7, "Encoder 2", "64 ch · 128²"],
-    [2.35, 3.65, "Encoder 3", "128 ch · 64²"], [3.15, 4.6, "Encoder 4", "256 ch · 32²"]];
-  const dec = [[5.05, 4.6, "Decoder 1", "128 ch · 32²"], [5.85, 3.65, "Decoder 2", "64 ch · 64²"],
-    [6.65, 2.7, "Decoder 3", "32 ch · 128²"], [7.45, 1.75, "Decoder 4", "16 ch · 256²"]];
-  enc.forEach(([x, y, a, b]) => box(s, x, y, W, H, `${a}\n${b}`, { size: 12 }));
-  dec.forEach(([x, y, a, b]) => box(s, x, y, W, H, `${a}\n${b}`, { size: 12, fill: C.background1 }));
-  for (let i = 0; i < 3; i++) {
-    arrow(s, enc[i][0] + 0.4, enc[i][1] + H, enc[i + 1][0] + 0.4, enc[i + 1][1]);
-    arrow(s, dec[i][0] + W - 0.4, dec[i][1], dec[i + 1][0] + W - 0.4, dec[i + 1][1] + H);
-  }
-  arrow(s, enc[3][0] + W, 4.6 + H / 2, dec[0][0], 4.6 + H / 2);
-  caption(s, 4.62, 4.95, 0.5, "pool", { size: 10, align: "center" });
-  for (let i = 0; i < 3; i++) // skip connections
-    arrow(s, enc[i][0] + W, enc[i][1] + 0.22, dec[3 - i][0], dec[3 - i][1] + 0.22, { dash: "dash", color: C.accent1 });
-  caption(s, 3.5, 1.62, 2.5, "skip connections (concatenate)", { size: 10, color: C.accent1, align: "center" });
-  caption(s, 0.75, 1.32, 2.4, "image 3×256×256", { size: 12, color: C.text1 });
-  caption(s, 7.45, 1.32, 1.85, "→ mask logits", { size: 12, color: C.text1 });
-  // the memory input
-  s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.75, y: 5.95, w: 8.25, h: 0.55, rectRadius: 0.08,
-    fill: { color: C.accent2 }, line: { color: C.accent2 } });
-  s.addText("Previous mask (memory) 1×256×256, max-pooled into the MixPool of every block",
-    { x: 0.75, y: 5.95, w: 8.25, h: 0.55, isTextBox: true, fontSize: 13, bold: true, color: C.background1, align: "center", valign: "middle", margin: 0 });
-  [...enc, ...dec].forEach(([x, y]) => arrow(s, x + W / 2, 5.95, x + W / 2, y + H, { color: C.accent2, width: 0.75 }));
-  card(s, 9.45, 1.45, 3.25, 5.05, "Inside the blocks", bullets([
-    "Encoder: Residual ×2 → MixPool → MaxPool",
-    "Decoder: TransposedConv ↑2 → concat skip → Residual ×2 → MixPool",
-    "Residual: two 3×3 conv + BN, 1×1 shortcut with squeeze-and-excitation",
-    "Output: previous mask concatenated, then 1×1 conv",
-    "7,720,266 parameters",
-  ]), { size: 13 });
-  s.addNotes("Encoder halves the resolution and doubles channels; the decoder reverses it and concatenates the encoder features of the same scale (skip connections). The previous mask enters every block through MixPool and is also concatenated before the final 1x1 convolution. Shapes are exactly what src/model.py prints.");
+const FIG = (name) => path.join(__dirname, "figures", name);
+function diagramSlide(title, file, ratio, notes) {
+  const s = content(title, "Proposed System");
+  const h = 5.62, w = Math.min(h * ratio, 12.1);
+  s.addImage({ path: FIG(file), x: (13.333 - w) / 2, y: 1.3, w, h: w / ratio });
+  s.addNotes(notes);
 }
 
-// ------------------------------------------------------------------ 6. MixPool
+diagramSlide("Architecture: a U-Net that also takes the previous mask", "diagram_architecture.png", 1330 / 660,
+  "Read it like the paper's Fig. 2c. Bottom row, encoder: each stage is two SE-Residual blocks, a MixPool block and 2x2 max pooling, so 256 becomes 128, 64, 32, 16 while channels go 32, 64, 128, 256. " +
+  "Top row, decoder, right to left: a 4x4 transposed convolution with stride 2 doubles the size, the same-size encoder features (skip s4..s1, dashed) are concatenated, then two SE-Residual blocks and MixPool. " +
+  "Red: the previous mask from the memory goes into all eight MixPool blocks, max-pooled to each block's size, and is concatenated once more before the 1x1 output convolution. " +
+  "Left column: the memory starts as the Otsu mask; in training it is replaced by the model's own thresholded prediction whenever validation loss improves; at test time it is overwritten every round. 7,720,266 parameters.");
 
-{
-  const s = content("MixPool: the previous mask decides where to look", "Proposed System");
-  box(s, 0.6, 3.05, 1.5, 0.8, "features x", { bold: true });
-  box(s, 2.7, 1.5, 2.6, 0.8, "fmask head\nconv3×3 · BN · ReLU · conv1×1 · σ", { size: 11 });
-  box(s, 5.8, 1.5, 1.4, 0.8, "> 0.5\nF (0/1)", { size: 12 });
-  box(s, 2.7, 0.0 + 4.95, 2.6, 0.8, "previous mask M\nmax-pooled to x's size", { size: 12, fill: C.background1, line: C.accent2 });
-  box(s, 5.8, 3.2, 1.4, 0.8, "F OR M\n= A", { size: 13, bold: true, line: C.accent2 });
-  box(s, 7.75, 2.3, 1.9, 0.8, "x · A\nconv3×3 · BN · ReLU", { size: 11 });
-  box(s, 7.75, 4.15, 1.9, 0.8, "x\nconv3×3 · BN · ReLU", { size: 11 });
-  box(s, 10.2, 3.2, 1.3, 0.8, "concat\n→ out", { size: 13, bold: true });
-  arrow(s, 2.1, 3.3, 2.7, 1.9);
-  arrow(s, 5.3, 1.9, 5.8, 1.9);
-  arrow(s, 6.5, 2.3, 6.5, 3.2);
-  arrow(s, 4.0, 4.95, 5.8, 3.85, { color: C.accent2 });
-  arrow(s, 7.2, 3.5, 7.75, 2.85);
-  arrow(s, 2.1, 3.65, 7.75, 4.5);
-  arrow(s, 9.65, 2.7, 10.2, 3.4);
-  arrow(s, 9.65, 4.55, 10.2, 3.85);
-  caption(s, 7.75, 3.3, 2.2, "masked half", { size: 11, align: "center" });
-  caption(s, 7.75, 5.0, 2.2, "unmasked half", { size: 11, align: "center" });
-  const panel = (x, w) => s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y: 5.95, w, h: 0.95, rectRadius: 0.1,
-    fill: { color: C.background2 }, line: { color: C.background2, width: 0 } });
-  panel(0.6, 6.0);
-  s.addText([{ text: "Why two halves? ", options: { bold: true } },
-    { text: "If the mask is wrong, the unmasked half still carries every feature, so a bad mask cannot erase the polyp." }],
-    { x: 0.8, y: 6.0, w: 5.7, h: 0.85, isTextBox: true, fontSize: 13, color: C.text1, valign: "middle", margin: 0 });
-  panel(6.85, 5.85);
-  s.addText([{ text: "Found in the code: ", options: { bold: true, color: C.accent2 } },
-    { text: "the > 0.5 threshold has no gradient, so the fmask convs (982,088 parameters, 13%) never train." }],
-    { x: 7.05, y: 6.0, w: 5.5, h: 0.85, isTextBox: true, fontSize: 13, color: C.text1, valign: "middle", margin: 0 });
-  s.addNotes("Step by step: a small head guesses a mask from the features and thresholds it. The previous mask is max-pooled to the feature size, so a cell is 1 if any pixel in it was 1. Attention is the OR of the two. Features outside the attention are zeroed (hard attention) and convolved; the untouched features are convolved separately; the halves are concatenated. Observation: thresholding with > 0.5 has zero gradient, verified by checking grad is None for 48 parameter tensors.");
-}
+diagramSlide("Inside the blocks: SE-Residual and MixPool", "diagram_blocks.png", 1330 / 700,
+  "(a) SE-Residual: main path 3x3 conv, BN, ReLU, 3x3 conv, BN; shortcut 1x1 conv, BN and squeeze-and-excitation (channel attention: average-pool each channel, two small FC layers, sigmoid weights, rescale). Output is ReLU of the sum. " +
+  "(b) MixPool: the fmask head guesses a mask from the features and thresholds it at 0.5 (M_f). The previous mask is max-pooled to the feature size (M_p), so a cell is 1 if any pixel in it was 1. " +
+  "A = M_f OR M_p. Features times A (zero outside: hard spatial attention) go through conv-BN-ReLU to C/2 channels; the untouched features go through their own conv-BN-ReLU to C/2; the halves are concatenated. " +
+  "Found in the code: the > 0.5 step has zero gradient, so the fmask convs (982,088 parameters, 13%) never train; verified by checking grad is None.");
 
-// ------------------------------------------------------------------ 7. training + refinement
-
-{
-  const s = content("Each image's last prediction is fed back as its next input", "Proposed System");
-  const steps = [
-    ["Start", "Before epoch 1, every image's memory is an Otsu threshold of the blurred grey image"],
-    ["Predict", "pred = FANet(image, memory[i]); loss = 0.5·BCE + 0.5·Dice; Adam step"],
-    ["Stage", "Store pred > 0.5 for image i in a staging copy"],
-    ["Commit", "If test loss improved: save the checkpoint and memory ← staging"],
-  ];
-  steps.forEach(([h, b], i) => {
-    const y = 1.5 + i * 1.12;
-    s.addShape(pres.shapes.OVAL, { x: 0.6, y, w: 0.6, h: 0.6, fill: { color: C.accent1 }, line: { color: C.accent1 } });
-    s.addText(String(i + 1), { x: 0.6, y, w: 0.6, h: 0.6, isTextBox: true, fontSize: 16, bold: true,
-      color: C.background1, align: "center", valign: "middle", margin: 0 });
-    s.addText([{ text: h + "  ", options: { bold: true, color: C.text2 } }, { text: b }],
-      { x: 1.4, y: y - 0.1, w: 5.4, h: 0.85, isTextBox: true, fontSize: 14, color: C.text1, valign: "middle", margin: 0 });
-  });
-  caption(s, 0.6, 6.0, 6.2, "Augmentation (as in the authors' code): rotate ±35°, flips, cut-out holes on image and ground truth; the memory is not moved.",
-    { size: 12, h: 0.6, italic: true });
-  card(s, 7.2, 1.45, 5.5, 5.05, "Test time: iterative refinement", "", {});
-  s.addImage({ path: asset("otsu_example.png"), x: 7.45, y: 2.2, w: 5.0, h: 2.45 });
-  caption(s, 7.45, 4.7, 2.45, "test image", { align: "center", size: 11 });
-  caption(s, 10.0, 4.7, 2.45, "Otsu start (round 0)", { align: "center", size: 11 });
-  s.addText(bullets(["Start from Otsu, predict, put the prediction back, predict again: 10 rounds (official setting)",
-    "Otsu marks 60% of each image on average; polyps cover 14%"]),
-    { x: 7.45, y: 5.05, w: 5.0, h: 1.35, isTextBox: true, fontSize: 13, color: C.text1, valign: "top", margin: 0, paraSpaceAfter: 4 });
-  s.addNotes("The memory is only replaced when the test loss improves, so it always comes from the best model so far. At test time the memory starts again from Otsu; no ground truth is ever used. Otsu is a classical threshold that maximises between-class variance of the grey-level histogram; on colonoscopy images it picks bright regions, not polyps, so it is a poor start.");
-}
+diagramSlide("Training with the memory, testing with refinement", "diagram_loop.png", 1330 / 660,
+  "Training: images in shuffled batches of 8; the official augmentation rotates and flips image and ground truth but not the memory, so the model must check its hint against the image. " +
+  "Each batch: hint = memory[index], forward, 0.5 BCE + 0.5 Dice, backward, Adam. Predictions > 0.5 are staged; at the end of the epoch they are committed only if validation loss improved (best epoch 107, stopped at 147). " +
+  "Testing: weights frozen. The memory starts from Otsu; each round the predicted mask is written back and used as the next hint; 10 rounds take Dice from 0.615 to 0.842. Ground truth is never an input.");
 
 // ------------------------------------------------------------------ 8. implementation
 
@@ -386,6 +311,7 @@ pres.addSection({ title: "Dataset Used" });
     ["Hardware", "—", "—", "RTX 5050 8 GB · Kaggle T4 / P100"]];
   s.addTable(rows, { x: 5.5, y: 1.45, w: 7.2, colW: [1.45, 1.35, 2.1, 2.3], fontSize: 12, color: HEX.dk1,
     border: { type: "solid", pt: 0.5, color: "D5DEDF" }, rowH: 0.55, valign: "middle" });
+  s.addImage({ path: path.join(__dirname, "figures", "diagram_pipeline_data.png"), x: 0.6, y: 5.95, w: 12.1, h: 12.1 * 100 / 1330 });
   s.addNotes("The paper trains at 512x512 for 100 epochs; the authors' public code uses 256x256, batch 2, up to 500 epochs. We train 256 on the laptop and 512 on Kaggle. The checkpoint is chosen on the test images, as in the authors' code, which is slightly optimistic; a separate validation split is possible with src.split --val.");
 }
 

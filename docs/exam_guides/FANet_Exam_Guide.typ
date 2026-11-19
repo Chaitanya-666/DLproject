@@ -742,31 +742,35 @@ The deck has *20 slides* in the five sections of ma'am's PPT brief (17 Nov): *Pr
 
 == Slide 6: Architecture: a U-Net that also takes the previous mask
 #thumb(6)
-#slidesays["Encoder: Residual ×2 → MixPool → MaxPool" · "Decoder: TransposedConv ↑2 → concat skip → Residual ×2 → MixPool" · "Residual: two 3×3 conv + BN, 1×1 shortcut with squeeze-and-excitation" · "Output: previous mask concatenated, then 1×1 conv" · "7,720,266 parameters"]
+#slidesays[Paper-style diagram (like the paper's Fig. 2c). Bottom row "Encoder 1–4": "SE-Residual ×2 · MixPool · MaxPool 2×2 ↓2", outputs "32×128² · 64×64² · 128×32² · 256×16²" · top row "Decoder 1–4" (right to left): "TConv 4×4, s2 · Concat skip s4…s1 · SE-Residual ×2 · MixPool", outputs "128×32² · 64×64² · 32×128² · 16×256²" · "Output head: Concat prev mask → 17 · 1×1 Conv 17→1 · Sigmoid · > 0.5 → 0/1 mask" · red line "previous mask, max-pooled to each block's size" into every MixPool and the head · "Mask memory: train: commit when val loss falls; test: overwrite" · "Otsu start (epoch 0 / round 0)" · "7,720,266 parameters"]
 #plain[
-- The boxes show the skip size of each stage: 32 ch at 256², 64 at 128², 128 at 64², 256 at 32².
-- Output size rule and parameter rule come from your notes _(Ch4, §4)_. Details in Part A, §3.1.
+- *Walk it with your finger:* input image bottom left → right through Encoders 1–4 (size halves, channels double) → up the "bottleneck 256×16²" line on the right → left through Decoders 1–4 (size doubles) → Output head → predicted mask top left.
+- *Dashed teal* = skip connections: the same-size encoder features are concatenated in the decoder. *Red* = the hint (previous mask) entering all 8 MixPool blocks and the head.
+- Layer-by-layer shapes and parameter counts are in the report's layer table: E4 and D1 hold 75% of the weights.
 ]
-#where[`src/model.py:56-88` (FANet), `src/blocks.py:38-64` (residual block).]
-#ask([Why the 1×1 shortcut?], [The input and output channel counts differ, and you can only add tensors of the same shape. Your ResNet notes call this a 1×1 projection (Ch4, §8).])
+#where[`src/model.py:27-90` (encoder, decoder, FANet), `src/blocks.py:38-64` (residual block).]
+#ask([Why the 1×1 shortcut?], [The input and output channel counts differ, and you can only add tensors of the same shape. Your ResNet notes call this a 1×1 projection (Ch4, §8).], [Where does the previous mask go?], [Into all eight MixPool blocks (max-pooled to each block's size) and, once more, concatenated before the 1×1 output conv.])
 
-== Slide 7: MixPool: the previous mask decides where to look
+== Slide 7: Inside the blocks: SE-Residual and MixPool
 #thumb(7)
-#slidesays["Why two halves? If the mask is wrong, the unmasked half still carries every feature, so a bad mask cannot erase the polyp." · "Found in the code: the > 0.5 threshold has no gradient, so the fmask convs (982,088 parameters, 13%) never train."]
-#plain[The six steps are in Part A, §3.2. The gradient finding is in §6.2: a step function passes no gradient back, so those convs keep their random weights.]
-#where[`src/blocks.py:109-116`; the step is line `:110`.]
-#ask([Why does a threshold stop learning?], [Backprop multiplies derivatives along the chain. The derivative of a step is 0, so nothing reaches the fmask convs.])
-
-== Slide 8: Each image's last prediction is fed back as its next input
-#thumb(8)
-#slidesays["1 Start: Before epoch 1, every image's memory is an Otsu threshold of the blurred grey image" · "2 Predict: pred = FANet(image, memory[i]); loss = 0.5·BCE + 0.5·Dice; Adam step" · "3 Stage: Store pred > 0.5 for image i in a staging copy" · "4 Commit: If test loss improved: save the checkpoint and memory ← staging" · "Augmentation (as in the authors' code): rotate ±35°, flips, cut-out holes on image and ground truth; the memory is not moved." · "Otsu marks 60% of each image on average; polyps cover 14%"]
+#slidesays["(a) SE-Residual block": "3×3 Conv → Batch Norm → ReLU → 3×3 Conv → Batch Norm", shortcut "1×1 Conv → Batch Norm → Squeeze & Excite", "out = ReLU(main + shortcut)" · inset "Squeeze & Excite (channel attention): Global avg pool C×h×w → C · FC C→1 · ReLU · FC 1→C · Sigmoid → w · x × w per channel" · "(b) MixPool block": "Previous mask M → MaxPool → M_p" · "fmask head: 3×3 Conv → BN → ReLU → 1×1 Conv → Sigmoid" → "Threshold > 0.5 → M_f" ("step: zero gradient") · "A = M_f ∪ M_p (OR)" · "F × A: hard attention, zero outside A" → "attended half C/2" · "plain half C/2 (sees everything)" · "Concat → C×h×w" · "Why two halves? If M is wrong, the plain half still carries every feature…" · "Found in the code: the > 0.5 step has no gradient, so the fmask convs (982,088 parameters, 13%) never train."]
 #plain[
-- The four steps are the training loop of Part A, §3.3.
-- "Test loss" is said honestly: for Kvasir, the validation set is the test set (Part A, §4).
-- Otsu marks far more than the polyp, so it is a poor start. That is why round 1 is low.
+- (a) is the backbone block: residual shortcut for easy training, SE to weight channels per image (soft *channel* attention).
+- (b) is FANet's own block: hard *spatial* attention from the hint OR the block's own guess. The six steps are in Part A, §3.2. The gradient finding is in §6.2.
 ]
-#where[`src/memory.py:31-36` (Otsu), `:60-68` (stage, commit), `src/train.py:187-190` (commit rule).]
-#ask([What does Otsu do?], [It picks the grey level that best splits dark from bright pixels and marks the bright ones. No learning.])
+#where[`src/blocks.py:12-36` (SE), `:38-64` (residual), `:109-116` (MixPool; the step is line `:110`).]
+#ask([Why does a threshold stop learning?], [Backprop multiplies derivatives along the chain. The derivative of a step is 0, so nothing reaches the fmask convs.], [Is the SE block standard?], [The idea is (SENet), but the official code gives it a hidden layer of 1 unit and puts it on the shortcut. I copied that to stay faithful.])
+
+== Slide 8: Training with the memory, testing with refinement
+#thumb(8)
+#slidesays[Top panel "Training: one epoch": "Train set: 880, shuffled, batch 8" → "Augment (p 0.3 each): rotate ±35°, flips: image + GT; cutout holes: image only" → "FANet (image, prev mask)" → "Probabilities" → "Loss vs ground truth 0.5·BCE + 0.5·Dice" → "Backward + Adam, lr 1e-4" · "Mask memory: 880 × 1×256×256, Otsu before epoch 1" with "get(idx): looked up by image index; NOT rotated" · "Staging copy" → "End of epoch: val loss (120 images) improved?" → "Yes → commit: memory ← staging; save best.pt" / "No → keep old memory; LR ×0.1 after 5, stop after 40" · bottom panel "Testing: weights frozen, 10 refinement rounds": "Round-0 mask Otsu (or empty)" → "FANet (best.pt)" → "Mask probs > 0.5" → "Write back memory ← mask" · bars "Test Dice after each round": .615 → .842]
+#plain[
+- Two loops: in *training* the weights learn and the hints improve only when validation improves; in *testing* the weights are frozen and only the hint changes, every round.
+- "Val loss" is the test set for Kvasir (no separate validation split; Part A, §4).
+- Otsu marks about 60% of each image, polyps cover 14%, so round 1 starts badly (0.615).
+]
+#where[`src/train.py:54` (`run_epoch`), `:185-193` (scheduler, commit, save); `src/memory.py:31-36` (Otsu), `:60-68` (stage, commit); `src/evaluate.py:95-110` (rounds).]
+#ask([What does Otsu do?], [It picks the grey level that best splits dark from bright pixels and marks the bright ones. No learning.], [Epoch vs refinement round?], [An epoch is one pass over all training images and changes the weights. A round re-runs the same test image with its last mask; weights stay fixed.])
 
 == Slide 9: Every layer, loss and metric is written from scratch
 #thumb(9)
@@ -782,9 +786,9 @@ The deck has *20 slides* in the five sections of ma'am's PPT brief (17 Nov): *Pr
 
 == Slide 10: Setup: Kvasir-SEG with the paper's 880 / 120 split
 #thumb(10)
-#slidesays["1000 colonoscopy images with polyp masks drawn by a doctor and verified by a gastroenterologist (Vestre Viken, Norway)" · "880 train / 120 test, fixed seed 42; the paper's split ratio (Table I)" · "Resized to 256×256 (512×512 run on Kaggle)" \
+#slidesays["1000 colonoscopy images with polyp masks drawn by a doctor and verified by a gastroenterologist (Vestre Viken, Norway)" · "880 train / 120 test, fixed seed 42; the paper's split ratio (Table I)" · "Resized to 256×256 (512×512 run on Kaggle)" · strip at the bottom: "Kvasir-SEG 1000 images → split.py, seed 42, 880 train / 120 test → Resize once to 256² (image bilinear, mask nearest) → Mask clean-up > half of max value (JPEG noise) → Kept in RAM, ÷255 → DataLoader batch 8, shuffle, index i → memory slot" \
 Table (Paper | Authors' code | This project): Input "512×512" | "256×256" | "256×256 (laptop) · 512×512 (Kaggle)" · Batch / epochs "100 epochs" | "2 / 500" | "8 / ≤200, early stop 40 · 512: 4 / 100" · Optimiser "Adam 1e-4" | "Adam 1e-4, plateau ×0.1" | "same" · Test "refinement" | "10 rounds from Otsu" | "same" · Hardware (this project) "RTX 5050 8 GB · Kaggle T4 / P100"]
-#plain[The three columns are paper, authors' code and your project. The paper's text says 512 and 100 epochs; the authors' code uses 256, batch 2 and up to 500 epochs. You follow the code at 256 and the paper at 512.]
+#plain[Masks are resized with *nearest neighbour* so they stay 0/1 (bilinear would create in-between values at edges). The three columns are paper, authors' code and your project. The paper's text says 512 and 100 epochs; the authors' code uses 256, batch 2 and up to 500 epochs. You follow the code at 256 and the paper at 512.]
 #ask([Why batch 8 and not 2?], [To use the GPU better and finish in time. It is one possible reason for the small gap to the paper.])
 
 == Slide 11: Own dataset: 30 leaf photos, hand-labelled in Roboflow
@@ -900,7 +904,7 @@ None of these changes a headline number. If ma'am points one out, stay calm and 
   [3], [Report §5: "extra runs on Kaggle T4/P100". The README says the first 512 run used a P100.], [The Kaggle logs show Tesla T4 for all three Kaggle runs. Say "Kaggle T4".],
   [4], [The README says the 512×512 run's best epoch was 77.], [The saved checkpoint is from epoch 80 (lowest loss). Epoch 77 only had the highest test Dice. 0.831 comes from epoch 80.],
   [5], [Report §7.4 and slide 18: the default schedule cut the rate and "both models" scored about 0.04 lower.], [Only the fine-tuned run's rate was cut (epochs 13, 19, 25, 31; best epoch 7). The scratch run's rate was never cut; its re-run gained from 100 instead of 60 epochs.],
-  [6], [Slide 8: "cut-out holes on image and ground truth".], [Rotation and flips move image and mask together. Cut-out is applied to the image only (`src/train.py:82`).],
+  [6], [The old slide 8 said "cut-out holes on image and ground truth" (fixed on 19 Nov: the new diagram says image only).], [Rotation and flips move image and mask together. Cut-out is applied to the image only (`src/train.py:82`).],
   [7], [The notebook and project book show the main run's command with `--amp`.], [The saved run settings show no AMP; the flag was added later. AMP was used for the 512 official, LDSD and Roboflow runs.],
   [8], [Report §8 mentions test-set selection only for Kvasir.], [The 470-photo LDSD runs and the synthetic-leaf runs also had no validation split, so they chose checkpoints on their test sets. Only the Roboflow runs are fully clean.],
   [9], [Report §6 lists "no feedback (ablation)" as a plain ablation.], [It was trained with the older augmentation (flips, 90° turns, brightness), not ±35° rotations. It also keeps MixPool, while the paper's baseline removes it.],
