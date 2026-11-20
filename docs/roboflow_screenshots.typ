@@ -81,10 +81,9 @@ Two datasets were built by hand on Roboflow (workspace `chaitanyadl`, account ck
 )
 
 #pagebreak()
-#grid(columns: (1fr, 1fr), gutter: 10pt, align: bottom,
-  shot("roboflow_extra/det_03_version_v1_by_author.png", [A14. Version `tomato-leaf-v1`, created by ck Orion2 on 18 Nov 2026: 572 images, train 528 / valid 22 / test 22.], h: 12cm),
-  shot("roboflow_extra/det_04_universe_public.png", [A15. Public page on Roboflow Universe (CC BY 4.0). The fifth "class" listed is Roboflow's project-name placeholder and holds no boxes (A1 shows 4 classes).], h: 12cm),
-)
+#shot("roboflow_extra/det_05_version_v1_details.png", [A14. Version `tomato-leaf-v1`, created by ck Orion2 on 18 Nov 2026: 572 images, train 528 / valid 22 / test 22; preprocessing (Auto-Orient, stretch to 640×640) and augmentations (3 outputs per training image; flips; rotation ±15°; brightness ±15%).], w: 100%)
+#v(4pt)
+#shot("roboflow_extra/det_04_universe_public.png", [A15. Public page on Roboflow Universe (CC BY 4.0). The fifth "class" listed is Roboflow's project-name placeholder and holds no boxes (A1 shows 4 classes).], h: 10.6cm)
 
 #pagebreak()
 = B. Leaf disease spots: Semantic Segmentation dataset (FANet's own dataset)
@@ -120,4 +119,6 @@ Two datasets were built by hand on Roboflow (workspace `chaitanyadl`, account ck
 #shot("roboflow/10_aug_summary.png", [B12. Augmentation summary: 5× outputs per training image.], w: 100%)
 
 #pagebreak()
-#shot("roboflow/11_version_v1_126_images.png", [B13. Generated version v1: 126 images (120 train + 6 valid).], w: 100%)
+#shot("roboflow/11_version_v1_126_images.png", [B13. Generated version v1: 126 images (120 train + 6 valid).], w: 92%)
+#v(4pt)
+#shot("roboflow_extra/seg_03_version_v1_details.png", [B14. Version v1 (2026-11-07 9:33 pm), created by ck Orion2 on 7 Nov 2026: 126 images, train 120 / valid 6; preprocessing (Auto-Orient, stretch to 256×256) and augmentations (5 outputs per training image; flips; 90° rotations; rotation ±15°; brightness ±15%).], w: 92%)

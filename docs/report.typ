@@ -11,6 +11,7 @@
 #show raw.where(block: true): it => block(fill: luma(244), inset: 8pt, radius: 3pt, width: 100%, it)
 #show figure.caption: set text(size: 9.5pt)
 #show table.cell.where(y: 0): set text(weight: "bold")
+#show link: set text(fill: rgb("#1f4fb4"))
 #let fig(path, cap, w: 100%) = figure(image(path, width: w), caption: cap)
 
 #align(center)[
@@ -27,7 +28,9 @@
     [Programme:], [B.Tech Computer Engineering, Semester VII, 2026–27],
     [Course:], [Deep Learning],
     [Base paper:], [N. K. Tomar et al., "FANet: A Feedback Attention Network for \ Improved Biomedical Image Segmentation," _IEEE Transactions on \ Neural Networks and Learning Systems_, vol. 34, no. 11, 2023],
-    [Date:], [18 November 2026],
+    [Code:], [#link("https://github.com/Chaitanya-666/DLproject")[github.com/Chaitanya-666/DLproject]],
+    [Weights:], [#link("https://huggingface.co/Ckorion/fanet-polyp-leaf-from-scratch")[huggingface.co/Ckorion/fanet-polyp-leaf-from-scratch]],
+    [Date:], [20 November 2026],
   )
   #v(1.6cm)
   #block(width: 88%, inset: 12pt, stroke: 0.6pt + luma(160), radius: 3pt)[
@@ -183,7 +186,7 @@ Colonoscopy images cannot be collected by a student, so we kept the *task* (segm
 
 The dataset is public at #link("https://universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne")[universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne].
 
-#fig("../presentation/assets/roboflow_steps.png", [Screenshots taken while building the dataset: (1) labelling a photo by hand, each layer is one outlined spot; (2) the 30 labelling jobs; (3) resizing to 256×256; (4) the 90° rotation augmentation. All 11 screenshots are in the submission package.])
+#fig("../presentation/assets/roboflow_steps.png", [Screenshots taken while building the dataset: (1) labelling a photo by hand, each layer is one outlined spot; (2) the 30 labelling jobs; (3) resizing to 256×256; (4) the 90° rotation augmentation. All screenshots are in the Roboflow screenshots PDF submitted with this report.])
 #fig("../presentation/assets/roboflow_grid.png", [The 30 photos in the Roboflow project with the hand-drawn polygon labels.], w: 92%)
 #fig("../presentation/assets/roboflow_version.png", [Version v1 as generated in Roboflow: split, preprocessing and augmentation.], w: 92%)
 
@@ -238,15 +241,38 @@ FANet was implemented from scratch and reproduced on Kvasir-SEG: Dice 0.842 unde
 
 Future work: more hand-labelled leaf photos, a detector trained on the tomato-leaf set, a trainable soft gate for the fmask head, repeated runs with different seeds, and video, where the previous frame's mask is a natural feedback input.
 
+= Public links <sec-links>
+Everything behind this report is public. The Colab notebook downloads the code, both datasets and the trained weights from the links below, re-creates the train/test splits and checks them against the hashes of the splits used for every number in this report; run on a free Colab T4 it reproduces the Kvasir-SEG Dice of 0.842.
+
+#let L(url, label) = link(url)[#text(size: 9.5pt, label)]
+#block(breakable: false)[#set par(justify: false)
+#table(columns: (36%, 1fr), stroke: 0.4pt, inset: 5pt,
+  [Resource], [Public URL],
+  table.cell(colspan: 2, fill: luma(238))[*My work*],
+  [Source code (GitHub)], [#L("https://github.com/Chaitanya-666/DLproject", "github.com/Chaitanya-666/DLproject")],
+  [Colab notebook (open and run)], [#L("https://colab.research.google.com/github/Chaitanya-666/DLproject/blob/main/notebooks/231070066_ChaitanyaShinde_Colab.ipynb", [colab.research.google.com/github/Chaitanya-666/DLproject/ \ blob/main/notebooks/231070066_ChaitanyaShinde_Colab.ipynb])],
+  [Trained weights (Hugging Face)], [#L("https://huggingface.co/Ckorion/fanet-polyp-leaf-from-scratch", "huggingface.co/Ckorion/fanet-polyp-leaf-from-scratch") \ #text(size: 9pt)[Kvasir-SEG model, Roboflow-leaf fine-tuned and from-scratch models, LDSD-470 fine-tuned model]],
+  [Roboflow: leaf-disease segmentation dataset (own, 30 photos, 277 polygons)], [#L("https://universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne", "universe.roboflow.com/chaitanyadl/leaf-disease-seg-ib5ne")],
+  [Roboflow: tomato-leaf detection dataset (own, 220 photos, 4 classes, 233 boxes)], [#L("https://universe.roboflow.com/chaitanyadl/tomato-leaf-disease-det/dataset/1", "universe.roboflow.com/chaitanyadl/tomato-leaf-disease-det/dataset/1")],
+  table.cell(colspan: 2, fill: luma(238))[*Base paper and source data*],
+  [FANet paper (IEEE TNNLS)], [#L("https://doi.org/10.1109/TNNLS.2022.3159394", "doi.org/10.1109/TNNLS.2022.3159394") · #L("https://arxiv.org/abs/2103.17235", "arxiv.org/abs/2103.17235")],
+  [Authors' official code (reference only)], [#L("https://github.com/nikhilroxtomar/FANet", "github.com/nikhilroxtomar/FANet")],
+  [Kvasir-SEG (paper's dataset)], [#L("https://datasets.simula.no/kvasir-seg/", "datasets.simula.no/kvasir-seg")],
+  [LDSD leaf photos (CC0)], [#L("https://www.kaggle.com/datasets/fakhrealam9537/leaf-disease-segmentation-dataset", "kaggle.com/datasets/fakhrealam9537/leaf-disease-segmentation-dataset")],
+  [PlantVillage (tomato photos)], [#L("https://arxiv.org/abs/1511.08060", "arxiv.org/abs/1511.08060")],
+)]
+
 = Deliverables <sec-deliv>
-#block(breakable: false)[#table(columns: (auto, 1fr), stroke: 0.4pt, inset: 5pt,
-  [Item], [Location in the submission package],
-  [Presentation (20 slides)], [`01_Presentation/` (PPTX and PDF)],
-  [Notebook, executed with outputs], [`02_Notebook/FANet_project.ipynb` (and an HTML copy)],
-  [Roboflow dataset], [`03_Roboflow_Dataset/`: segmentation export, 11 screenshots of each step, label agreement CSV; `detection_tomato/`: YOLOv8 export and screenshots; public links above],
-  [This report], [`04_Report/`],
-  [Source code and result tables], [`05_Code/`: `src/`, `README.md` (full documentation and commands), `results/` (every CSV behind the numbers)],
-  [Trained weights], [published separately (link in the package README)],
+#block(breakable: false)[#set par(justify: false)
+#show raw: set text(size: 8.5pt)
+#table(columns: (34%, 1fr), stroke: 0.4pt, inset: 5pt,
+  [Item], [Submitted file (naming: RegNo_StudentName)],
+  [Google Colab notebook, executed with outputs], [`231070066_ChaitanyaShinde_Colab.ipynb` (also runnable from the Colab link in @sec-links)],
+  [Research paper], [`231070066_ChaitanyaShinde_ResearchPaper.pdf` (the FANet base paper)],
+  [Presentation (20 slides)], [`231070066_ChaitanyaShinde_PPT.pptx`],
+  [Roboflow dataset screenshots], [`231070066_ChaitanyaShinde_RoboflowScreenshots.pdf` (both datasets: analytics, annotation, versions, export, public pages)],
+  [This report], [`231070066_ChaitanyaShinde_Report.pdf`],
+  [Source code, result tables, weights], [GitHub and Hugging Face (@sec-links)],
 )]
 
 = References
